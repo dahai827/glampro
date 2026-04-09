@@ -1,0 +1,34 @@
+name: Calm
+options:
+  bundleIdPrefix: com.calm
+  deploymentTarget:
+    iOS: "15.6"
+  developmentLanguage: en
+
+targets:
+  Calm:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.6"
+    supportedDestinations:
+      - iOS
+    sources:
+      - path: Calm
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.calm.Calm
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Calm
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_NSCameraUsageDescription: Use the camera to capture your source photo for AI generation.
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: Use your photo library to choose source images for AI generation.
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Allow Calm to save generated images and videos to your Photos.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        DEVELOPMENT_LANGUAGE: en
+        SWIFT_VERSION: "5.0"
