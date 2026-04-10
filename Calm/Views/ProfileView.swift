@@ -972,45 +972,51 @@ private struct ProfileTaskPreviewView: View {
             let safeTop = geometry.safeAreaInsets.top
             let safeBottom = geometry.safeAreaInsets.bottom
 
-            VStack(spacing: 0) {
-                ZStack(alignment: .topLeading) {
-                    previewContent
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .clipped()
+            ZStack {
+                Color.clear
 
-                    topBar(topInset: safeTop)
-
-                    if viewModel.isResolving {
-                        VStack(spacing: 12) {
-                            ProgressView()
-                                .tint(.white)
-                            Text(viewModel.statusDetailText)
-                                .font(.calm(15, weight: .bold))
-                                .foregroundColor(.white)
-                            Text("This task is still being processed.")
-                                .font(.calm(13, weight: .medium))
-                                .foregroundColor(.white.opacity(0.72))
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 18)
-                        .background(
-                            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                .fill(Color.black.opacity(0.55))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                                )
-                        )
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                if viewModel.isResolving {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .tint(.white)
+                        Text(viewModel.statusDetailText)
+                            .font(.calm(15, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("This task is still being processed.")
+                            .font(.calm(13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.72))
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 18)
+                    .background(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .fill(Color.black.opacity(0.55))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .background(Color.black)
-
+            }
+            .background {
+                previewContent
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+            }
+            .overlay(alignment: .bottom) {
                 bottomPanel(bottomInset: safeBottom)
+                    .frame(width: geometry.size.width, alignment: .center)
+                    .offset(y: 30)
+            }
+            .overlay(alignment: .topLeading) {
+                topBar(topInset: safeTop)
+                    .zIndex(20)
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
+            .clipped()
             .background(Color.black.ignoresSafeArea())
-            .ignoresSafeArea(edges: .top)
+            .ignoresSafeArea()
         }
         .task {
             await viewModel.ensureResolved(sessionManager: sessionManager)
@@ -1099,14 +1105,30 @@ private struct ProfileTaskPreviewView: View {
     }
 
     private func topBar(topInset: CGFloat) -> some View {
-        HStack {
-            CircleIconButton(icon: "chevron.left", size: 40) {
+        let resolvedTopInset = max(topInset, 10)
+        return HStack {
+            Button {
                 dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.5))
+                    )
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.26), lineWidth: 0.9)
+                    )
             }
+            .buttonStyle(.plain)
+
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
-        .padding(.top, topInset + 8)
+        .padding(.top, resolvedTopInset + 8)
     }
 
     private func bottomPanel(bottomInset: CGFloat) -> some View {
@@ -1116,11 +1138,14 @@ private struct ProfileTaskPreviewView: View {
                     Text(task.sceneDisplayName)
                         .font(.calm(18, weight: .bold))
                         .foregroundColor(.white)
-                        .lineLimit(2)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
 
                     Text(viewModel.statusDetailText)
                         .font(.calm(14, weight: .medium))
                         .foregroundColor(CalmTheme.secondaryText)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
 
                 Spacer(minLength: 0)
@@ -1149,9 +1174,10 @@ private struct ProfileTaskPreviewView: View {
             .buttonStyle(.plain)
             .disabled(viewModel.mediaURL == nil || isSaving)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.top, 10)
-        .padding(.bottom, max(bottomInset, 12) + 6)
+        .padding(.bottom, max(bottomInset, 8))
         .background(Color.black)
     }
 

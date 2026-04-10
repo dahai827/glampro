@@ -158,6 +158,37 @@ final class PreviewGenerationStore: ObservableObject {
         lastFailureWasInsufficientCredits = false
     }
 
+    func beginExternalGeneration(item: RemoteFeatureItem) {
+        activeItem = item
+        selectedImages = [nil]
+        submissionState = .creatingTask
+        activeTask = nil
+        result = nil
+        observedTaskProgress = nil
+        lastFailureWasInsufficientCredits = false
+    }
+
+    func completeExternalGenerationCreation(with response: GenerationCreateResponse, isVideo: Bool = false) throws {
+        if let outputURL = response.outputURL {
+            result = GeneratedResult(
+                id: response.taskID ?? UUID().uuidString,
+                url: outputURL,
+                isVideo: isVideo
+            )
+            observedTaskProgress = 1
+            submissionState = .completed
+            return
+        }
+
+        if let taskID = response.taskID, !taskID.isEmpty {
+            activeTask = GeneratedTask(id: taskID, isVideo: isVideo)
+            submissionState = .readyToPoll
+            return
+        }
+
+        throw APIError.missingData
+    }
+
     func image(at index: Int) -> UIImage? {
         guard selectedImages.indices.contains(index) else { return nil }
         return selectedImages[index]

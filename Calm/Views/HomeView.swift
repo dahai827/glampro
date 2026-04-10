@@ -538,7 +538,14 @@ struct HomeView: View {
             } label: {
                 ZStack(alignment: .bottomLeading) {
                     ClippedArtworkContainer(cornerRadius: 18) {
-                        if let url = discoverCoverURL(for: item) {
+                        if let videoURL = item.coverVideoURL {
+                            RemoteLoopingVideoArtworkView(
+                                videoURL: videoURL,
+                                fallbackImageURL: discoverCoverURL(for: item),
+                                paletteIndex: paletteIndex(for: item.id),
+                                cornerRadius: 18
+                            )
+                        } else if let url = discoverCoverURL(for: item) {
                             RemoteArtworkView(
                                 url: url,
                                 paletteIndex: paletteIndex(for: item.id),
@@ -602,6 +609,7 @@ struct HomeView: View {
             SavedTemplateBookmarkButton(item: item, iconSize: 15, padding: 12)
         }
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .id(itemViewIdentity(item))
     }
 
     private func discoverCoverURL(for item: RemoteFeatureItem) -> URL? {
@@ -883,13 +891,23 @@ struct HomeView: View {
                             } label: {
                                 VStack(alignment: .leading, spacing: 8) {
                                     ZStack(alignment: .topLeading) {
-                                        RemoteArtworkView(
-                                            url: item.effectiveCoverURL,
-                                            paletteIndex: paletteIndex(for: item.id),
-                                            cornerRadius: trendCardCornerRadius,
-                                            contentMode: .fill
-                                        )
-                                        .frame(width: cardWidth, height: cardHeight)
+                                        if let videoURL = item.coverVideoURL {
+                                            RemoteLoopingVideoArtworkView(
+                                                videoURL: videoURL,
+                                                fallbackImageURL: item.effectiveCoverURL,
+                                                paletteIndex: paletteIndex(for: item.id),
+                                                cornerRadius: trendCardCornerRadius
+                                            )
+                                            .frame(width: cardWidth, height: cardHeight)
+                                        } else {
+                                            RemoteArtworkView(
+                                                url: item.effectiveCoverURL,
+                                                paletteIndex: paletteIndex(for: item.id),
+                                                cornerRadius: trendCardCornerRadius,
+                                                contentMode: .fill
+                                            )
+                                            .frame(width: cardWidth, height: cardHeight)
+                                        }
 
                                         if let badge = remoteBadgeText(for: item) {
                                             remoteBadge(title: badge)
@@ -921,6 +939,7 @@ struct HomeView: View {
 
                             SavedTemplateBookmarkButton(item: item, iconSize: 14, padding: 10)
                         }
+                        .id(itemViewIdentity(item))
                     }
                 }
                 .padding(.bottom, 4)
@@ -1006,6 +1025,13 @@ struct HomeView: View {
 
     private func paletteIndex(for seed: String) -> Int {
         abs(seed.hashValue) % 8
+    }
+
+    private func itemViewIdentity(_ item: RemoteFeatureItem) -> String {
+        if let videoURL = item.coverVideoURL {
+            return "\(item.id)-\(videoURL.absoluteString)"
+        }
+        return item.id
     }
 
     private func trendsRow(cards: [TrendCard]) -> some View {

@@ -669,12 +669,14 @@ final class CreditPurchaseStore: ObservableObject {
             let result = try await product.purchase()
             switch result {
             case let .success(verification):
-                await onVerifying()
+                onVerifying()
                 try await verifyCreditPurchase(verification: verification, sessionManager: sessionManager)
             case .userCancelled:
                 throw CreditPurchaseStoreError.userCancelled
             case .pending:
                 throw CreditPurchaseStoreError.purchasePending
+            @unknown default:
+                throw CreditPurchaseStoreError.verificationFailed("Purchase result is not supported on this iOS version.")
             }
         } catch let error as CreditPurchaseStoreError {
             throw error

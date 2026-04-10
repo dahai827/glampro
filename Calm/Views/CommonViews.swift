@@ -1,4 +1,6 @@
 import SwiftUI
+import AVFoundation
+import UIKit
 
 struct ScreenContainer<Content: View>: View {
     let background: AnyView
@@ -269,6 +271,104 @@ struct RemoteArtworkView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+}
+
+struct RemoteLoopingVideoArtworkView: View {
+    let videoURL: URL
+    let fallbackImageURL: URL?
+    let paletteIndex: Int
+    let cornerRadius: CGFloat
+
+    @StateObject private var engine = RemoteLoopingVideoEngine()
+
+    var body: some View {
+        ZStack {
+            PlaceholderArtwork(paletteIndex: paletteIndex, cornerRadius: cornerRadius)
+
+            if let fallbackImageURL {
+                AsyncImage(url: fallbackImageURL) { phase in
+                    switch phase {
+                    case let .success(image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .transition(.opacity)
+                    default:
+                        Color.clear
+                    }
+                }
+            }
+
+            RemoteLoopingVideoPlayerView(player: engine.player)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .onAppear {
+            engine.configure(url: videoURL)
+            engine.play()
+        }
+        .task(id: videoURL) {
+            engine.configure(url: videoURL)
+            engine.play()
+        }
+        .onDisappear {
+            engine.pause()
+        }
+    }
+}
+
+private final class RemoteLoopingVideoEngine: ObservableObject {
+    let player = AVQueuePlayer()
+
+    private var looper: AVPlayerLooper?
+    private var currentURL: URL?
+
+    init() {
+        player.isMuted = true
+        player.actionAtItemEnd = .none
+    }
+
+    func configure(url: URL) {
+        guard currentURL != url else { return }
+        currentURL = url
+        player.pause()
+        player.removeAllItems()
+        let item = AVPlayerItem(url: url)
+        looper = AVPlayerLooper(player: player, templateItem: item)
+    }
+
+    func play() {
+        player.play()
+    }
+
+    func pause() {
+        player.pause()
+    }
+}
+
+private struct RemoteLoopingVideoPlayerView: UIViewRepresentable {
+    let player: AVQueuePlayer
+
+    func makeUIView(context: Context) -> RemoteLoopingVideoPlayerContainerView {
+        let view = RemoteLoopingVideoPlayerContainerView()
+        view.playerLayer.player = player
+        view.playerLayer.videoGravity = .resizeAspectFill
+        return view
+    }
+
+    func updateUIView(_ uiView: RemoteLoopingVideoPlayerContainerView, context: Context) {
+        uiView.playerLayer.player = player
+        uiView.playerLayer.videoGravity = .resizeAspectFill
+    }
+}
+
+private final class RemoteLoopingVideoPlayerContainerView: UIView {
+    override static var layerClass: AnyClass {
+        AVPlayerLayer.self
+    }
+
+    var playerLayer: AVPlayerLayer {
+        layer as! AVPlayerLayer
     }
 }
 
