@@ -1041,12 +1041,14 @@ final class SubscriptionStore: ObservableObject {
             let result = try await product.purchase()
             switch result {
             case let .success(verification):
-                await onVerificationStarted()
+                onVerificationStarted()
                 try await verifySubscription(verification: verification, sessionManager: sessionManager)
             case .userCancelled:
                 throw SubscriptionStoreError.userCancelled
             case .pending:
                 throw SubscriptionStoreError.purchasePending
+            @unknown default:
+                throw SubscriptionStoreError.verificationFailed("Purchase result is not supported on this iOS version.")
             }
         } catch let error as SubscriptionStoreError {
             throw error
@@ -1085,7 +1087,7 @@ final class SubscriptionStore: ObservableObject {
                 throw SubscriptionStoreError.noSubscriptionFound
             }
 
-            await onVerificationStarted()
+            onVerificationStarted()
             try await verifySubscription(verification: matchedVerification, sessionManager: sessionManager)
         } catch let error as SubscriptionStoreError {
             throw error

@@ -172,9 +172,8 @@ struct RootView: View {
         case .generationResult:
             GenerationResultView(
                 onClose: appState.dismissRoute,
-                onCreateAgain: {
-                    previewGenerationStore.beginEditing(item: previewGenerationStore.activeItem)
-                    appState.replace(with: .uploadPhotos)
+                onGoToProfile: {
+                    appState.replace(with: .profile)
                 }
             )
         case .subscriptionOne:

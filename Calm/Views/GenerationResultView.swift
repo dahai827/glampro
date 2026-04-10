@@ -15,7 +15,7 @@ struct GenerationResultView: View {
     @Environment(\.openURL) private var openURL
 
     let onClose: () -> Void
-    let onCreateAgain: () -> Void
+    let onGoToProfile: () -> Void
 
     @State private var isVideoPaused = false
     @State private var isSavingResult = false
@@ -30,15 +30,16 @@ struct GenerationResultView: View {
             let safeTop = geometry.safeAreaInsets.top
             let safeBottom = geometry.safeAreaInsets.bottom
 
-            VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
                 previewStage(topInset: safeTop)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
 
                 bottomPanel(bottomInset: safeBottom)
+                    .offset(y: 30)
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-            .background(Color.black.ignoresSafeArea())
+            .background(CalmTheme.background.ignoresSafeArea())
             .ignoresSafeArea(edges: .top)
         }
         .alert(item: $saveFeedback) { feedback in
@@ -131,11 +132,11 @@ struct GenerationResultView: View {
     private func bottomPanel(bottomInset: CGFloat) -> some View {
         HStack(spacing: 12) {
             actionButton(
-                title: "Create Again",
-                icon: "arrow.clockwise",
+                title: "Go To Profile",
+                icon: "person.crop.circle",
                 fill: AnyShapeStyle(Color.white.opacity(0.12)),
                 foreground: .white,
-                action: onCreateAgain
+                action: onGoToProfile
             )
 
             actionButton(
@@ -150,7 +151,7 @@ struct GenerationResultView: View {
         .padding(.horizontal, 12)
         .padding(.top, 10)
         .padding(.bottom, max(bottomInset, 12) + 6)
-        .background(Color.black)
+        .background(CalmTheme.background)
     }
 
     private func saveAction() {
