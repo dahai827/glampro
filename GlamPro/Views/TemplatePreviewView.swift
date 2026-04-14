@@ -33,16 +33,6 @@ struct TemplatePreviewView: View {
         return (fallback?.isEmpty == false) ? fallback : nil
     }
 
-    private var previewDescription: String? {
-        let primary = selectedItem?.previewConfig?.description?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let primary, !primary.isEmpty {
-            return primary
-        }
-
-        let fallback = selectedItem?.displaySubtitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (fallback?.isEmpty == false) ? fallback : nil
-    }
-
     private var hasVideo: Bool {
         selectedItem?.coverVideoURL != nil
     }
@@ -105,23 +95,13 @@ struct TemplatePreviewView: View {
 
     @ViewBuilder
     private func previewTextLayer(availableWidth: CGFloat) -> some View {
-        if previewTitle != nil || previewDescription != nil {
+        if let previewTitle {
             VStack(alignment: .leading, spacing: 8) {
-                if let previewTitle {
-                    Text(previewTitle)
-                        .font(.calm(28, weight: .heavy))
-                        .foregroundColor(.white)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                }
-
-                if let previewDescription {
-                    Text(previewDescription)
-                        .font(.calm(15, weight: .medium))
-                        .foregroundColor(.white.opacity(0.86))
-                        .lineLimit(3)
-                        .multilineTextAlignment(.leading)
-                }
+                Text(previewTitle)
+                    .font(.calm(28, weight: .heavy))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
             }
             .frame(width: min(availableWidth - 112, 262), alignment: .leading)
         }
@@ -131,7 +111,6 @@ struct TemplatePreviewView: View {
         VStack(alignment: .center, spacing: 24) {
             likeActionItem
             bookmarkActionItem
-            actionItem(icon: "arrowshape.turn.up.right", title: "Share")
         }
     }
 
@@ -149,7 +128,7 @@ struct TemplatePreviewView: View {
                 .frame(height: 56)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(CalmTheme.accentGradient)
+                        .fill(GlamProTheme.accentGradient)
                 )
             }
             .buttonStyle(.plain)
@@ -336,6 +315,7 @@ private final class TemplatePreviewVideoEngine: ObservableObject {
 
     private var looper: AVPlayerLooper?
     private var currentURL: URL?
+    private var loadTask: Task<Void, Never>?
 
     init() {
         player.isMuted = true
@@ -348,9 +328,14 @@ private final class TemplatePreviewVideoEngine: ObservableObject {
         currentURL = url
         player.pause()
         player.removeAllItems()
-
-        let item = AVPlayerItem(url: url)
-        looper = AVPlayerLooper(player: player, templateItem: item)
+        loadTask?.cancel()
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            let playableURL = await GlamVideoCacheManager.shared.cachedURL(for: url)
+            guard !Task.isCancelled, self.currentURL == url else { return }
+            let item = AVPlayerItem(url: playableURL)
+            self.looper = AVPlayerLooper(player: self.player, templateItem: item)
+        }
     }
 
     func play() {

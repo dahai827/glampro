@@ -36,10 +36,10 @@ struct GenerationResultView: View {
                     .clipped()
 
                 bottomPanel(bottomInset: safeBottom)
-                    .offset(y: 30)
+                    .offset(y: 60)
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-            .background(CalmTheme.background.ignoresSafeArea())
+            .background(GlamProTheme.background.ignoresSafeArea())
             .ignoresSafeArea(edges: .top)
         }
         .alert(item: $saveFeedback) { feedback in
@@ -83,30 +83,24 @@ struct GenerationResultView: View {
                     }
             } else {
                 ZStack {
-                    AsyncImage(url: result.url) { phase in
-                        switch phase {
-                        case let .success(image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .blur(radius: 24)
-                                .overlay(Color.black.opacity(0.18))
-                        default:
-                            PlaceholderArtwork(paletteIndex: 0, cornerRadius: 0)
-                        }
+                    GlamCachedAsyncImage(url: result.url) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .blur(radius: 24)
+                            .overlay(Color.black.opacity(0.18))
+                    } placeholder: {
+                        PlaceholderArtwork(paletteIndex: 0, cornerRadius: 0)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
 
-                    AsyncImage(url: result.url) { phase in
-                        switch phase {
-                        case let .success(image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        default:
-                            PlaceholderArtwork(paletteIndex: 0, cornerRadius: 0)
-                        }
+                    GlamCachedAsyncImage(url: result.url) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        PlaceholderArtwork(paletteIndex: 0, cornerRadius: 0)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
@@ -142,7 +136,7 @@ struct GenerationResultView: View {
             actionButton(
                 title: isSavingResult ? "Saving..." : "Save",
                 icon: "square.and.arrow.down",
-                fill: AnyShapeStyle(CalmTheme.accentGradient),
+                fill: AnyShapeStyle(GlamProTheme.accentGradient),
                 foreground: .white,
                 isLoading: isSavingResult,
                 action: saveAction
@@ -151,7 +145,7 @@ struct GenerationResultView: View {
         .padding(.horizontal, 12)
         .padding(.top, 10)
         .padding(.bottom, max(bottomInset, 12) + 6)
-        .background(CalmTheme.background)
+        .background(GlamProTheme.background)
     }
 
     private func saveAction() {
@@ -176,7 +170,7 @@ struct GenerationResultView: View {
             guard Self.isPhotoLibraryAccessGranted(status) else {
                 saveFeedback = SaveFeedback(
                     title: "Photos Access Needed",
-                    message: "Please allow photo access so Calm can save generated content to your Photos.",
+                    message: "Please allow photo access so Glam Pro can save generated content to your Photos.",
                     opensSettings: status == .denied || status == .restricted
                 )
                 return
@@ -355,6 +349,7 @@ private final class ResultVideoEngine: ObservableObject {
 
     private var looper: AVPlayerLooper?
     private var currentURL: URL?
+    private var loadTask: Task<Void, Never>?
 
     init() {
         player.isMuted = true
@@ -366,8 +361,14 @@ private final class ResultVideoEngine: ObservableObject {
         currentURL = url
         player.pause()
         player.removeAllItems()
-        let item = AVPlayerItem(url: url)
-        looper = AVPlayerLooper(player: player, templateItem: item)
+        loadTask?.cancel()
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            let playableURL = await GlamVideoCacheManager.shared.cachedURL(for: url)
+            guard !Task.isCancelled, self.currentURL == url else { return }
+            let item = AVPlayerItem(url: playableURL)
+            self.looper = AVPlayerLooper(player: self.player, templateItem: item)
+        }
     }
 
     func play() {

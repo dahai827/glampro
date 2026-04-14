@@ -1,6 +1,144 @@
 import SwiftUI
 import AVFoundation
 import UIKit
+import CryptoKit
+
+enum GlamMediaCacheBootstrap {
+    private static var didConfigure = false
+
+    static func configureIfNeeded() {
+        guard !didConfigure else { return }
+        didConfigure = true
+
+        URLCache.shared = URLCache(
+            memoryCapacity: 80 * 1024 * 1024,
+            diskCapacity: 700 * 1024 * 1024,
+            directory: nil
+        )
+    }
+}
+
+struct GlamCachedAsyncImage<Content: View, Placeholder: View>: View {
+    let url: URL?
+    let content: (Image) -> Content
+    let placeholder: () -> Placeholder
+
+    @StateObject private var loader = GlamCachedImageLoader()
+
+    init(
+        url: URL?,
+        @ViewBuilder content: @escaping (Image) -> Content,
+        @ViewBuilder placeholder: @escaping () -> Placeholder
+    ) {
+        self.url = url
+        self.content = content
+        self.placeholder = placeholder
+    }
+
+    var body: some View {
+        Group {
+            if let uiImage = loader.image {
+                content(Image(uiImage: uiImage))
+            } else {
+                placeholder()
+            }
+        }
+        .task(id: url) {
+            await loader.load(url: url)
+        }
+    }
+}
+
+@MainActor
+private final class GlamCachedImageLoader: ObservableObject {
+    @Published var image: UIImage?
+    private var currentURL: URL?
+
+    func load(url: URL?) async {
+        guard currentURL != url else { return }
+        currentURL = url
+        image = nil
+        guard let url else { return }
+
+        let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 30)
+        if let cached = URLCache.shared.cachedResponse(for: request),
+           let cachedImage = UIImage(data: cached.data) {
+            image = cachedImage
+            return
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                return
+            }
+            if let resolvedImage = UIImage(data: data) {
+                image = resolvedImage
+                URLCache.shared.storeCachedResponse(CachedURLResponse(response: response, data: data), for: request)
+            }
+        } catch {
+            return
+        }
+    }
+}
+
+actor GlamVideoCacheManager {
+    static let shared = GlamVideoCacheManager()
+
+    private var inFlightTasks: [String: Task<Void, Never>] = [:]
+    private let fileManager = FileManager.default
+
+    private lazy var cacheDirectory: URL = {
+        let base = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let dir = base.appendingPathComponent("GlamVideoCache", isDirectory: true)
+        if !fileManager.fileExists(atPath: dir.path) {
+            try? fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir
+    }()
+
+    func cachedURL(for remoteURL: URL) async -> URL {
+        let key = remoteURL.absoluteString
+        let localURL = localFileURL(for: remoteURL)
+        if fileManager.fileExists(atPath: localURL.path) {
+            return localURL
+        }
+
+        // Keep playback responsive: play remote URL immediately, cache in background for next time.
+        if inFlightTasks[key] == nil {
+            inFlightTasks[key] = Task { [weak self] in
+                guard let self else { return }
+                await self.cacheRemoteVideo(remoteURL, to: localURL, key: key)
+            }
+        }
+
+        return remoteURL
+    }
+
+    private func cacheRemoteVideo(_ remoteURL: URL, to localURL: URL, key: String) async {
+        defer { inFlightTasks.removeValue(forKey: key) }
+        do {
+            let (tempURL, response) = try await URLSession.shared.download(from: remoteURL)
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                return
+            }
+            if fileManager.fileExists(atPath: localURL.path) {
+                try? fileManager.removeItem(at: localURL)
+            }
+            try? fileManager.moveItem(at: tempURL, to: localURL)
+        } catch {
+            return
+        }
+    }
+
+    private func localFileURL(for remoteURL: URL) -> URL {
+        let digest = SHA256.hash(data: Data(remoteURL.absoluteString.utf8))
+            .compactMap { String(format: "%02x", $0) }
+            .joined()
+        let ext = remoteURL.pathExtension.isEmpty ? "mp4" : remoteURL.pathExtension
+        return cacheDirectory.appendingPathComponent("\(digest).\(ext)")
+    }
+}
 
 struct ScreenContainer<Content: View>: View {
     let background: AnyView
@@ -38,7 +176,7 @@ struct BrandPill: View {
     var body: some View {
         HStack(spacing: 7) {
             BrandOrb(size: 18)
-            Text("Calm AI")
+            Text("Glam Pro")
                 .font(.calm(15, weight: .bold))
         }
         .foregroundColor(.white)
@@ -61,7 +199,7 @@ struct BrandOrb: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(CalmTheme.brandGradient)
+                .fill(GlamProTheme.brandGradient)
             Circle()
                 .fill(Color.black.opacity(0.2))
                 .frame(width: size * 0.64, height: size * 0.64)
@@ -76,11 +214,24 @@ struct BrandOrb: View {
 struct CircleIconButton: View {
     let icon: String
     let size: CGFloat
+    let iconColor: Color
+    let backgroundColor: Color
+    let borderColor: Color
     let action: () -> Void
 
-    init(icon: String, size: CGFloat = 34, action: @escaping () -> Void) {
+    init(
+        icon: String,
+        size: CGFloat = 34,
+        iconColor: Color = .white,
+        backgroundColor: Color = Color.white.opacity(0.1),
+        borderColor: Color = Color.white.opacity(0.05),
+        action: @escaping () -> Void
+    ) {
         self.icon = icon
         self.size = size
+        self.iconColor = iconColor
+        self.backgroundColor = backgroundColor
+        self.borderColor = borderColor
         self.action = action
     }
 
@@ -88,15 +239,15 @@ struct CircleIconButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: size * 0.42, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(iconColor)
                 .frame(width: size, height: size)
                 .background(
                     Circle()
-                        .fill(Color.white.opacity(0.1))
+                        .fill(backgroundColor)
                 )
                 .overlay(
                     Circle()
-                        .stroke(Color.white.opacity(0.05), lineWidth: 0.8)
+                        .stroke(borderColor, lineWidth: 0.8)
                 )
         }
         .buttonStyle(.plain)
@@ -125,7 +276,7 @@ struct CapsuleChip: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 9)
                     .frame(height: 25)
-                    .background(Capsule().fill(CalmTheme.pink))
+                    .background(Capsule().fill(GlamProTheme.pink))
             }
         }
         .foregroundColor(isSelected ? .black : .white.opacity(0.94))
@@ -184,7 +335,7 @@ struct PlaceholderArtwork: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(CalmTheme.cardGradient(paletteIndex))
+                .fill(GlamProTheme.cardGradient(paletteIndex))
 
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(
@@ -253,20 +404,13 @@ struct RemoteArtworkView: View {
             PlaceholderArtwork(paletteIndex: paletteIndex, cornerRadius: cornerRadius, symbol: symbol)
 
             if let url {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case let .success(image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: contentMode)
-                            .transition(.opacity)
-                    case .empty:
-                        Color.clear
-                    case .failure:
-                        Color.clear
-                    @unknown default:
-                        Color.clear
-                    }
+                GlamCachedAsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: contentMode)
+                        .transition(.opacity)
+                } placeholder: {
+                    Color.clear
                 }
             }
         }
@@ -287,16 +431,13 @@ struct RemoteLoopingVideoArtworkView: View {
             PlaceholderArtwork(paletteIndex: paletteIndex, cornerRadius: cornerRadius)
 
             if let fallbackImageURL {
-                AsyncImage(url: fallbackImageURL) { phase in
-                    switch phase {
-                    case let .success(image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .transition(.opacity)
-                    default:
-                        Color.clear
-                    }
+                GlamCachedAsyncImage(url: fallbackImageURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .transition(.opacity)
+                } placeholder: {
+                    Color.clear
                 }
             }
 
@@ -322,6 +463,8 @@ private final class RemoteLoopingVideoEngine: ObservableObject {
 
     private var looper: AVPlayerLooper?
     private var currentURL: URL?
+    private var loadTask: Task<Void, Never>?
+    private var shouldAutoPlay = false
 
     init() {
         player.isMuted = true
@@ -333,15 +476,26 @@ private final class RemoteLoopingVideoEngine: ObservableObject {
         currentURL = url
         player.pause()
         player.removeAllItems()
-        let item = AVPlayerItem(url: url)
-        looper = AVPlayerLooper(player: player, templateItem: item)
+        loadTask?.cancel()
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            let playableURL = await GlamVideoCacheManager.shared.cachedURL(for: url)
+            guard !Task.isCancelled, self.currentURL == url else { return }
+            let item = AVPlayerItem(url: playableURL)
+            self.looper = AVPlayerLooper(player: self.player, templateItem: item)
+            if self.shouldAutoPlay {
+                self.player.play()
+            }
+        }
     }
 
     func play() {
+        shouldAutoPlay = true
         player.play()
     }
 
     func pause() {
+        shouldAutoPlay = false
         player.pause()
     }
 }
@@ -393,7 +547,7 @@ struct GradientButton: View {
             .frame(height: 56)
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(CalmTheme.accentGradient)
+                    .fill(GlamProTheme.accentGradient)
             )
         }
         .buttonStyle(.plain)
@@ -409,13 +563,13 @@ struct ProgressRing: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 8)
             Circle()
                 .trim(from: 0, to: progress)
-                .stroke(CalmTheme.purple, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                .stroke(GlamProTheme.purple, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
             VStack(spacing: 4) {
                 Text("\(Int(progress * 100))%")
                     .font(.calm(28, weight: .bold))
-                    .foregroundColor(CalmTheme.purple)
+                    .foregroundColor(GlamProTheme.purple)
                 Text("RENDERING")
                     .font(.calm(10, weight: .bold))
                     .kerning(1)

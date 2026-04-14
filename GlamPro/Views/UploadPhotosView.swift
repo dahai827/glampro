@@ -25,7 +25,7 @@ struct UploadPhotosView: View {
 
     var body: some View {
         ZStack {
-            CalmTheme.background
+            GlamProTheme.background
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
@@ -96,7 +96,7 @@ struct UploadPhotosView: View {
 
             Text(item?.displaySubtitle ?? "Pick a clear photo to start creating with AI.")
                 .font(.calm(15, weight: .medium))
-                .foregroundColor(CalmTheme.secondaryText)
+                .foregroundColor(GlamProTheme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 8) {
@@ -114,7 +114,7 @@ struct UploadPhotosView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(CalmTheme.elevated)
+                .fill(GlamProTheme.elevated)
         )
     }
 
@@ -158,7 +158,7 @@ struct UploadPhotosView: View {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(CalmTheme.orange)
+                    .foregroundColor(GlamProTheme.orange)
                 Text(message)
                     .font(.calm(14, weight: .medium))
                     .foregroundColor(.white)
@@ -187,7 +187,7 @@ struct UploadPhotosView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(CalmTheme.elevated)
+                .fill(GlamProTheme.elevated)
         )
     }
 
@@ -226,7 +226,7 @@ struct UploadPhotosView: View {
                 .frame(height: 56)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(previewGenerationStore.canGenerate ? CalmTheme.accentGradient : LinearGradient(colors: [Color.white.opacity(0.14), Color.white.opacity(0.08)], startPoint: .leading, endPoint: .trailing))
+                        .fill(previewGenerationStore.canGenerate ? GlamProTheme.accentGradient : LinearGradient(colors: [Color.white.opacity(0.14), Color.white.opacity(0.08)], startPoint: .leading, endPoint: .trailing))
                 )
             }
             .buttonStyle(.plain)
@@ -272,7 +272,7 @@ struct UploadPhotosView: View {
                                     .foregroundColor(.white)
                                 Text("Tap to select, then choose Photo or Camera above")
                                     .font(.calm(13, weight: .medium))
-                                    .foregroundColor(CalmTheme.secondaryText)
+                                    .foregroundColor(GlamProTheme.secondaryText)
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal, 18)
                             }
@@ -332,10 +332,10 @@ struct UploadPhotosView: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(CalmTheme.purple)
+                .foregroundColor(GlamProTheme.purple)
             Text(title)
                 .font(.calm(14, weight: .medium))
-                .foregroundColor(CalmTheme.secondaryText)
+                .foregroundColor(GlamProTheme.secondaryText)
         }
     }
 

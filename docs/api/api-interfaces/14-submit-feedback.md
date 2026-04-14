@@ -1,5 +1,7 @@
 ## 📝 提交用户反馈
 
+> **响应格式说明**：成功时 HTTP 200 的 JSON 为**顶层** `id` + `message`（见下节）。若你仍持有旧版文档中 `success` + `data` 嵌套的描述，以本文档为准。
+
 ### 接口信息
 
 - **URL**：`POST /submit-feedback`
@@ -37,13 +39,19 @@
 
 ### 响应
 
-**成功响应** (200):
+**成功响应** (HTTP 200)：Body 为**顶层**字段，**无** `success` / `data` 包装。
+
 ```json
 {
-  "id": "660e8400-e29b-41d4-a716-446655440000",
-  "message": "反馈提交成功"
+  "id": "9d7d30a6-d0f5-4f73-b30e-0e38b99e0193",
+  "message": "Feedback submitted successfully."
 }
 ```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | string | 反馈记录 ID（UUID） |
+| message | string | 成功提示文案（英文或运营配置文案） |
 
 **错误响应** (400):
 ```json
@@ -59,12 +67,11 @@
 }
 ```
 
-### 字段说明
+### 字段说明（错误体）
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | string | 反馈记录ID（UUID） |
-| message | string | 响应消息 |
+| error | string | 错误信息（失败时返回） |
 
 ### 重要提示
 
@@ -106,12 +113,12 @@ async function submitFeedback(userId, appVersion, content, appId = 'default') {
 
     const data = await response.json();
 
-    if (response.ok && data.success) {
-      console.log('✅ 反馈提交成功，ID:', data.data.id);
+    if (response.ok && data.id && !data.error) {
+      console.log('✅ 反馈提交成功，ID:', data.id);
       return {
         success: true,
-        feedbackId: data.data.id,
-        message: data.data.message
+        feedbackId: data.id,
+        message: data.message
       };
     } else {
       console.error('❌ 反馈提交失败:', data.error);
@@ -167,7 +174,7 @@ class FeedbackManager {
     this.userId = userId;
     this.appVersion = appVersion;
     this.appId = appId;
-    this.apiBase = 'https://lrenlgqppvqfbibxppbi.supabase.co/functions/v1';
+    this.apiBase = 'https://aipixvideo.hangzhouqiqiba.shop/functions/v1';
     this.anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZW5sZ3FwcHZxZmJpYnhwcGJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MTIxODMsImV4cCI6MjA3ODA4ODE4M30.xVbKv4Es1sZRtWYsqbcu4eBoL1XZlMcyLcEJTTpddP4';
   }
 
@@ -216,11 +223,11 @@ class FeedbackManager {
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.ok && data.id && !data.error) {
         return {
           success: true,
-          feedbackId: data.data.id,
-          message: data.data.message
+          feedbackId: data.id,
+          message: data.message
         };
       } else {
         return {

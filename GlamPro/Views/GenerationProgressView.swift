@@ -125,9 +125,9 @@ struct GenerationProgressView: View {
     private var heroCard: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 10) {
-                pillLabel(title: stageDisplayTitle, icon: stageIcon, tint: CalmTheme.purple)
+                pillLabel(title: stageDisplayTitle, icon: stageIcon, tint: GlamProTheme.purple)
                 pillLabel(title: progressModePillTitle, icon: progressModeIcon, tint: progressModeTint)
-                pillLabel(title: resultTypePillTitle, icon: previewGenerationStore.activeTask?.isVideo == true ? "video.fill" : "photo.fill", tint: CalmTheme.orange)
+                pillLabel(title: resultTypePillTitle, icon: previewGenerationStore.activeTask?.isVideo == true ? "video.fill" : "photo.fill", tint: GlamProTheme.orange)
             }
 
             Text(cardTitle)
@@ -165,7 +165,7 @@ struct GenerationProgressView: View {
                                 .fill(Color.white.opacity(0.10))
 
                             Capsule()
-                                .fill(CalmTheme.accentGradient)
+                                .fill(GlamProTheme.accentGradient)
                                 .frame(width: progressBarWidth(totalWidth: proxy.size.width))
                         }
                     }
@@ -219,7 +219,7 @@ struct GenerationProgressView: View {
                         .frame(height: 54)
                         .background(
                             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(CalmTheme.accentGradient)
+                                .fill(GlamProTheme.accentGradient)
                         )
                 }
                 .buttonStyle(.plain)
@@ -257,7 +257,7 @@ struct GenerationProgressView: View {
         case .failed:
             return "The task stopped before completion. You can go back and try again."
         default:
-            return previewGenerationStore.activeItem?.displaySubtitle ?? "Stay on this screen while Calm AI finishes your creation."
+            return previewGenerationStore.activeItem?.displaySubtitle ?? "Stay on this screen while Glam Pro AI finishes your creation."
         }
     }
 
@@ -341,13 +341,13 @@ struct GenerationProgressView: View {
     private var progressModeTint: Color {
         switch previewGenerationStore.submissionState {
         case .completed:
-            return CalmTheme.orange
+            return GlamProTheme.orange
         case .failed:
             return Color.red.opacity(0.82)
         case .readyToPoll, .polling:
-            return previewGenerationStore.observedTaskProgress == nil ? CalmTheme.blue : CalmTheme.orange
+            return previewGenerationStore.observedTaskProgress == nil ? GlamProTheme.blue : GlamProTheme.orange
         default:
-            return CalmTheme.blue
+            return GlamProTheme.blue
         }
     }
 
@@ -406,13 +406,13 @@ struct GenerationProgressView: View {
     private var footerTint: Color {
         switch previewGenerationStore.submissionState {
         case .failed:
-            return CalmTheme.orange
+            return GlamProTheme.orange
         case .completed:
-            return CalmTheme.orange
+            return GlamProTheme.orange
         case .readyToPoll, .polling:
-            return previewGenerationStore.observedTaskProgress == nil ? CalmTheme.blue : CalmTheme.orange
+            return previewGenerationStore.observedTaskProgress == nil ? GlamProTheme.blue : GlamProTheme.orange
         default:
-            return CalmTheme.purple
+            return GlamProTheme.purple
         }
     }
 
@@ -634,7 +634,7 @@ private struct GenerationHeroRing: View {
                 .trim(from: 0, to: min(max(progress, 0), 1))
                 .stroke(
                     AngularGradient(
-                        colors: [CalmTheme.pink, CalmTheme.orange, CalmTheme.purple, CalmTheme.pink],
+                        colors: [GlamProTheme.pink, GlamProTheme.orange, GlamProTheme.purple, GlamProTheme.pink],
                         center: .center
                     ),
                     style: StrokeStyle(lineWidth: 10, lineCap: .round)

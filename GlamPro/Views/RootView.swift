@@ -1,11 +1,25 @@
 import SwiftUI
 import UIKit
+import AppTrackingTransparency
 
 struct RootView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var sessionManager: SessionManager
     @EnvironmentObject private var appBootstrap: AppBootstrapStore
     @EnvironmentObject private var previewGenerationStore: PreviewGenerationStore
+    @StateObject private var dailyCheckinStore = DailyCheckinStore.shared
+    @State private var selectedFeatureSection: RemoteFeatureSection?
+    @State private var attRequestState: ATTRequestState = .idle
+
+    private enum ATTRequestState {
+        case idle
+        case inFlight
+        case decided
+    }
+
+    private static let attActivePollIntervalNs: UInt64 = 250_000_000
+    private static let attActivePollMaxSteps = 80
+    private static let attInitialDelayNs: UInt64 = 400_000_000
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -27,7 +41,7 @@ struct RootView: View {
             }
 
             if !appState.showSplash && appState.activeRoute == nil {
-                CustomTabBar(selectedTab: appState.selectedTab) { tab in
+                CustomTabBar(selectedTab: appState.selectedTab, shouldShowFeedBadge: appState.shouldShowFeedBadge) { tab in
                     appState.select(tab: tab)
                 }
                 .padding(.horizontal, 18)
@@ -36,7 +50,13 @@ struct RootView: View {
             }
 
             if appState.showRewardPopup {
-                DailyRewardPopup(onClose: appState.dismissReward, onClaim: appState.claimReward)
+                DailyRewardPopup(
+                    status: dailyCheckinStore.status,
+                    isClaiming: dailyCheckinStore.isSigning,
+                    errorMessage: dailyCheckinStore.errorMessage,
+                    onClose: appState.dismissReward,
+                    onClaim: handleDailyRewardClaim
+                )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .zIndex(10)
             }
@@ -44,6 +64,7 @@ struct RootView: View {
             if appState.showFeaturesSheet {
                 FeaturesView(
                     onSelectFeature: openFeatureFromSheet,
+                    onSelectVideoSection: openVideoSectionFromSheet,
                     onClose: appState.dismissFeatures
                 )
                 .zIndex(12)
@@ -59,7 +80,7 @@ struct RootView: View {
                     .zIndex(30)
             }
         }
-        .background(CalmTheme.background.ignoresSafeArea())
+        .background(GlamProTheme.background.ignoresSafeArea())
         .animation(.easeInOut(duration: 0.22), value: appState.activeRoute)
         .animation(.easeInOut(duration: 0.22), value: appState.selectedTab)
         .animation(.spring(response: 0.34, dampingFraction: 0.9), value: appState.showFeaturesSheet)
@@ -68,8 +89,24 @@ struct RootView: View {
             appState.startIfNeeded()
         }
         .task {
+            await requestTrackingIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            Task { @MainActor in
+                await requestTrackingIfNeeded()
+                FacebookAnalyticsService.shared.activateAppAfterTrackingBoundaryResolved()
+                await refreshDailyCheckinStatusIfPossible(force: true)
+            }
+        }
+        .task {
             await appBootstrap.prepareIfNeeded(sessionManager: sessionManager)
             maybePresentInitialSubscriptionPaywall()
+            await refreshDailyCheckinStatusIfPossible()
+        }
+        .onChange(of: sessionManager.didFinishBootstrapAttempt) { _ in
+            Task { @MainActor in
+                await refreshDailyCheckinStatusIfPossible()
+            }
         }
         .onChange(of: appState.showSplash) { _ in
             maybePresentInitialSubscriptionPaywall()
@@ -82,6 +119,13 @@ struct RootView: View {
         }
         .onChange(of: appState.activeRoute?.id) { _ in
             maybePresentInitialSubscriptionPaywall()
+        }
+        .fullScreenCover(item: $selectedFeatureSection) { section in
+            RemoteFeatureCollectionPageView(
+                section: section,
+                onClose: { selectedFeatureSection = nil },
+                onSelectItem: handleFeatureSectionItemSelection
+            )
         }
     }
 
@@ -101,7 +145,10 @@ struct RootView: View {
                 },
                 openProfile: { appState.open(.profile) },
                 openPreview: { appState.open(.templatePreview) },
-                openCollection: openHomeCollection
+                openCollection: openHomeCollection,
+                openAIChat: { appState.open(.aiChat) },
+                openCustomStyles: { appState.open(.customStyles) },
+                openMotionSwap: { appState.open(.motionSwap) }
             )
         case .feed:
             FeedView(
@@ -207,10 +254,122 @@ struct RootView: View {
             appState.open(.templatePreview)
         }
     }
+
+    private func openVideoSectionFromSheet(_ section: RemoteFeatureSection) {
+        appState.dismissFeatures()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            selectedFeatureSection = section
+        }
+    }
+
+    private func handleFeatureSectionItemSelection(_ item: RemoteFeatureItem) {
+        if item.isAd, let adURL = item.adIOSURL {
+            UIApplication.shared.open(adURL)
+            return
+        }
+
+        appBootstrap.selectPreviewItem(item)
+        selectedFeatureSection = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            appState.open(.templatePreview)
+        }
+    }
+
+    private func handleDailyRewardClaim() {
+        Task { @MainActor in
+            await claimDailyReward()
+        }
+    }
+
+    @MainActor
+    private func claimDailyReward() async {
+        let response = await dailyCheckinStore.signToday(sessionManager: sessionManager)
+        appState.updateDailyRewardEligibility(
+            dailyCheckinStore.canClaimToday,
+            rewardDateKey: dailyCheckinStore.status?.today
+        )
+        guard response?.success == true else { return }
+        let claimedDateKey = response?.checkinDate ?? dailyCheckinStore.status?.today
+        appState.claimReward(claimedDateKey: claimedDateKey)
+    }
+
+    @MainActor
+    private func refreshDailyCheckinStatusIfPossible(force: Bool = false) async {
+        guard sessionManager.didFinishBootstrapAttempt else { return }
+        await dailyCheckinStore.refreshStatus(sessionManager: sessionManager, force: force)
+        appState.updateDailyRewardEligibility(
+            dailyCheckinStore.canClaimToday,
+            rewardDateKey: dailyCheckinStore.status?.today
+        )
+    }
+
+    @MainActor
+    private func requestTrackingIfNeeded() async {
+        guard attRequestState == .idle else { return }
+
+        let currentStatus = ATTrackingManager.trackingAuthorizationStatus
+        print("[ATT] initial status: \(currentStatus.rawValue) (0=notDetermined 1=restricted 2=denied 3=authorized)")
+
+        guard currentStatus == .notDetermined else {
+            attRequestState = .decided
+            FacebookAnalyticsService.shared.initializeIfNeeded()
+            FacebookAnalyticsService.shared.updateATTStatus()
+            FacebookAnalyticsService.shared.activateAppAfterTrackingBoundaryResolved()
+            print("[ATT] tracking already decided: \(currentStatus.rawValue)")
+            return
+        }
+
+        attRequestState = .inFlight
+        try? await Task.sleep(nanoseconds: Self.attInitialDelayNs)
+
+        let becameActive = await waitUntilApplicationIsActiveForATT()
+        guard becameActive else {
+            print("[ATT] wait active timeout, reset to idle")
+            attRequestState = .idle
+            return
+        }
+
+        guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else {
+            attRequestState = .decided
+            let status = ATTrackingManager.trackingAuthorizationStatus
+            FacebookAnalyticsService.shared.initializeIfNeeded()
+            FacebookAnalyticsService.shared.updateATTStatus()
+            FacebookAnalyticsService.shared.activateAppAfterTrackingBoundaryResolved()
+            print("[ATT] status changed before prompt: \(status.rawValue)")
+            return
+        }
+
+        print("[ATT] requesting tracking authorization...")
+        let result = await ATTrackingManager.requestTrackingAuthorization()
+        print("[ATT] authorization result: \(result.rawValue)")
+
+        if result == .notDetermined {
+            attRequestState = .idle
+            print("[ATT] result still notDetermined, will retry on next active")
+            return
+        }
+
+        attRequestState = .decided
+        FacebookAnalyticsService.shared.initializeIfNeeded()
+        FacebookAnalyticsService.shared.updateATTStatus()
+        FacebookAnalyticsService.shared.activateAppAfterTrackingBoundaryResolved()
+    }
+
+    @MainActor
+    private func waitUntilApplicationIsActiveForATT() async -> Bool {
+        for _ in 0..<Self.attActivePollMaxSteps {
+            if UIApplication.shared.applicationState == .active {
+                return true
+            }
+            try? await Task.sleep(nanoseconds: Self.attActivePollIntervalNs)
+        }
+        return UIApplication.shared.applicationState == .active
+    }
 }
 
 private struct CustomTabBar: View {
     let selectedTab: AppTab
+    let shouldShowFeedBadge: Bool
     let onSelect: (AppTab) -> Void
 
     var body: some View {
@@ -219,7 +378,7 @@ private struct CustomTabBar: View {
             Spacer(minLength: 0)
             plusButton
             Spacer(minLength: 0)
-            navItem(title: "Feed", icon: "play.square.fill", tab: .feed, badge: 1)
+            navItem(title: "Feed", icon: "play.square.fill", tab: .feed, badge: shouldShowFeedBadge ? 1 : nil)
         }
         .frame(height: 74)
     }
@@ -258,9 +417,9 @@ private struct CustomTabBar: View {
             onSelect(.features)
         } label: {
             Circle()
-                .fill(CalmTheme.accentGradient)
+                .fill(GlamProTheme.accentGradient)
                 .frame(width: 56, height: 56)
-                .shadow(color: CalmTheme.pink.opacity(0.28), radius: 14, x: 0, y: 8)
+                .shadow(color: GlamProTheme.pink.opacity(0.28), radius: 14, x: 0, y: 8)
                 .overlay(
                     Image(systemName: "plus")
                         .font(.system(size: 26, weight: .bold))
@@ -268,7 +427,6 @@ private struct CustomTabBar: View {
                 )
         }
         .buttonStyle(.plain)
-        .offset(y: -6)
     }
 }
 
@@ -328,12 +486,24 @@ private struct FloatingPromoBanner: View {
 }
 
 private struct DailyRewardPopup: View {
+    let status: DailyCheckinStatusResponse?
+    let isClaiming: Bool
+    let errorMessage: String?
     let onClose: () -> Void
     let onClaim: () -> Void
 
     private let popupInnerHorizontalPadding: CGFloat = 22
     private let rewardRowBaseWidth: CGFloat = 332
     private let topCornerRadius: CGFloat = 28
+    private let defaultRewards: [DailyCheckinReward] = [
+        DailyCheckinReward(day: 1, credits: 10, status: "claimable"),
+        DailyCheckinReward(day: 2, credits: 10, status: "locked"),
+        DailyCheckinReward(day: 3, credits: 10, status: "locked"),
+        DailyCheckinReward(day: 4, credits: 10, status: "locked"),
+        DailyCheckinReward(day: 5, credits: 10, status: "locked"),
+        DailyCheckinReward(day: 6, credits: 20, status: "locked"),
+        DailyCheckinReward(day: 7, credits: 30, status: "locked")
+    ]
 
     var body: some View {
         GeometryReader { proxy in
@@ -364,7 +534,7 @@ private struct DailyRewardPopup: View {
             HStack(spacing: 6) {
                 Image(systemName: "flame.fill")
                     .font(.system(size: 12, weight: .bold))
-                Text("1-Day Streak")
+                Text("\(max(status?.currentStreakDay ?? 0, 0))-Day Streak")
                     .font(.calm(12, weight: .bold))
             }
             .foregroundColor(.white)
@@ -388,7 +558,7 @@ private struct DailyRewardPopup: View {
                 }
                 .frame(height: 154)
 
-                Text("+10 coins")
+                Text("+\(claimableCredits) coins")
                     .font(.calm(27, weight: .bold))
                     .foregroundColor(.white)
             }
@@ -396,17 +566,27 @@ private struct DailyRewardPopup: View {
             .padding(.bottom, 4)
 
             HStack(alignment: .bottom, spacing: metrics.itemSpacing) {
-                ForEach(0..<5, id: \.self) { _ in
-                    rewardDay(value: "10", isLarge: false, metrics: metrics)
+                ForEach(rewardDays, id: \.id) { day in
+                    rewardDay(
+                        value: "\(day.credits)",
+                        status: day.status,
+                        isLarge: day.day == focusedDay,
+                        metrics: metrics
+                    )
                 }
-                rewardDay(value: "20", isLarge: true, metrics: metrics)
-                rewardDay(value: "30", isLarge: true, metrics: metrics)
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 2)
 
+            if let errorMessage, !errorMessage.isEmpty {
+                Text(errorMessage)
+                    .font(.calm(12, weight: .medium))
+                    .foregroundColor(Color(hex: "FFB4A6"))
+                    .multilineTextAlignment(.center)
+            }
+
             Button(action: onClaim) {
-                Text("Claim")
+                Text(isClaiming ? "Claiming..." : "Claim")
                     .font(.calm(17, weight: .bold))
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
@@ -417,6 +597,8 @@ private struct DailyRewardPopup: View {
                     )
             }
             .buttonStyle(.plain)
+            .disabled(isClaiming || !isClaimable)
+            .opacity((isClaiming || !isClaimable) ? 0.72 : 1)
             .padding(.top, 2)
         }
         .padding(.horizontal, popupInnerHorizontalPadding)
@@ -448,13 +630,22 @@ private struct DailyRewardPopup: View {
         .shadow(color: Color.black.opacity(0.22), radius: 18, x: 0, y: -2)
     }
 
-    private func rewardDay(value: String, isLarge: Bool, metrics: RewardMetrics) -> some View {
+    private func rewardDay(value: String, status: String, isLarge: Bool, metrics: RewardMetrics) -> some View {
         let badgeSize = isLarge ? metrics.largeCoinSize : metrics.smallCoinSize
         let iconSize = badgeSize * (isLarge ? 0.5 : 0.44)
+        let lowerStatus = status.lowercased()
+        let isLocked = lowerStatus == "locked"
+        let isClaimable = lowerStatus == "claimable"
+        let isSigned = lowerStatus == "signed" || lowerStatus == "signed_today"
 
         return ZStack {
             Circle()
-                .fill(Color(hex: "4D401E").opacity(isLarge ? 1 : 0.82))
+                .fill(
+                    isClaimable
+                    ? Color(hex: "7E5A18")
+                    : (isSigned ? Color(hex: "4A5421") : Color(hex: "4D401E"))
+                )
+                .opacity(isLocked ? 0.45 : 1)
 
             if isLarge {
                 Circle()
@@ -473,6 +664,49 @@ private struct DailyRewardPopup: View {
             }
         }
         .frame(width: badgeSize, height: badgeSize)
+    }
+
+    private var rewardDays: [DailyCheckinReward] {
+        guard let dynamicRewards = status?.rewards, !dynamicRewards.isEmpty else {
+            return defaultRewards
+        }
+
+        let rewardByDay = Dictionary(uniqueKeysWithValues: dynamicRewards.map { ($0.day, $0) })
+        return (1...7).map { day in
+            rewardByDay[day] ?? defaultRewards[max(0, min(day - 1, defaultRewards.count - 1))]
+        }
+    }
+
+    private var claimableCredits: Int {
+        let apiCredits = status?.claimableCredits ?? 0
+        if apiCredits > 0 {
+            return apiCredits
+        }
+        return rewardDays.first(where: { $0.status.lowercased() == "claimable" })?.credits ?? 10
+    }
+
+    private var focusedDay: Int {
+        if let claimable = rewardDays.first(where: { $0.status.lowercased() == "claimable" })?.day {
+            return claimable
+        }
+        if let signedToday = rewardDays.first(where: { $0.status.lowercased() == "signed_today" })?.day {
+            return signedToday
+        }
+        if let status {
+            if let claimableDay = status.claimableDay, (1...7).contains(claimableDay) {
+                return claimableDay
+            }
+            let streakDay = status.currentStreakDay
+            if (1...7).contains(streakDay) {
+                return streakDay
+            }
+        }
+        return 1
+    }
+
+    private var isClaimable: Bool {
+        guard let status else { return true }
+        return status.isActive && !status.signedToday && status.claimableDay != nil
     }
 
     private var mainRewardCoinCluster: some View {
@@ -717,7 +951,7 @@ private struct SplashScreenView: View {
 
                 HStack(spacing: 10) {
                     BrandOrb(size: 44)
-                    Text("Calm")
+                    Text("Glam Pro")
                         .font(.calm(39, weight: .bold))
                         .foregroundColor(.white)
                 }
