@@ -1,6 +1,19 @@
 import SwiftUI
 
 struct HomeView: View {
+    private struct HomeBannerItem: Identifiable {
+        enum Destination {
+            case aiChat
+            case customStyles
+            case motionSwap
+        }
+
+        let id: String
+        let title: String
+        let videoURL: URL
+        let destination: Destination
+    }
+
     private struct ReviewLoginFeedback: Identifiable {
         let id = UUID()
         let title: String
@@ -26,6 +39,9 @@ struct HomeView: View {
     let openProfile: () -> Void
     let openPreview: () -> Void
     let openCollection: (HomeCollectionPage) -> Void
+    let openAIChat: () -> Void
+    let openCustomStyles: () -> Void
+    let openMotionSwap: () -> Void
 
     private let trendCardSpacing: CGFloat = 12
     private let trendCardPeekFraction: CGFloat = 2.0 / 3.0
@@ -40,15 +56,19 @@ struct HomeView: View {
 
     var body: some View {
         ScreenContainer(showBrand: false, bottomSpacing: selectedSection == .shots ? 116 : 102) {
-            CalmTheme.background
+            GlamProTheme.background
         } content: {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
-                    header
-                    filterRow
+            VStack(alignment: .leading, spacing: 16) {
+                header
+                    .padding(.horizontal, 16)
+
+                filterRow
+                    .padding(.horizontal, 16)
+
+                ScrollView(showsIndicators: false) {
                     contentBody
+                        .padding(.horizontal, 16)
                 }
-                .padding(.horizontal, 16)
             }
         }
         .fullScreenCover(item: $selectedRemoteSection) { section in
@@ -75,6 +95,11 @@ struct HomeView: View {
                 dismissButton: .default(Text("OK"))
             )
         }
+        .onAppear {
+            if selectedSection == .new {
+                selectSection(.all)
+            }
+        }
     }
 
     @ViewBuilder
@@ -88,8 +113,6 @@ struct HomeView: View {
             newContent
         case .shots:
             shotsContent
-        case .motionSwap:
-            motionSwapContent
         }
     }
 
@@ -136,7 +159,7 @@ struct HomeView: View {
                        subtitle.caseInsensitiveCompare(section.displayTitle) != .orderedSame {
                         Text(subtitle)
                             .font(.calm(13, weight: .medium))
-                            .foregroundColor(CalmTheme.secondaryText)
+                            .foregroundColor(GlamProTheme.secondaryText)
                             .padding(.top, -4)
                     }
 
@@ -175,7 +198,7 @@ struct HomeView: View {
 
                 Text("Apply your face to fresh daily photos")
                     .font(.calm(14, weight: .medium))
-                    .foregroundColor(CalmTheme.secondaryText)
+                    .foregroundColor(GlamProTheme.secondaryText)
             }
             .padding(.top, 6)
 
@@ -184,7 +207,7 @@ struct HomeView: View {
                 galleryGrid(
                     cards: scaledShotCards,
                     primaryBadgeTitle: "New",
-                    primaryBadgeColor: CalmTheme.pink,
+                    primaryBadgeColor: GlamProTheme.pink,
                     secondaryBadgeTitle: "FREE",
                     secondaryBadgeColor: Color(hex: "FFB93A"),
                     trailingIcon: "bookmark"
@@ -197,16 +220,24 @@ struct HomeView: View {
     }
 
     private var activeShotsSection: RemoteFeatureSection? {
+        let visibleSections = visibleShotsSections
         if let selectedShotsSectionID,
-           let matchedSection = appBootstrap.imageSections.first(where: { $0.id == selectedShotsSectionID }) {
+           let matchedSection = visibleSections.first(where: { $0.id == selectedShotsSectionID }) {
             return matchedSection
         }
 
-        return appBootstrap.imageSections.first
+        return visibleSections.first
     }
 
     private var activeShotsItems: [RemoteFeatureItem] {
         activeShotsSection?.items ?? []
+    }
+
+    private var visibleShotsSections: [RemoteFeatureSection] {
+        appBootstrap.imageSections.filter { section in
+            let title = section.displayTitle.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            return title != "frequently used"
+        }
     }
 
     private var scaledShotCards: [ShotCardModel] {
@@ -215,56 +246,15 @@ struct HomeView: View {
         }
     }
 
-    private var motionSwapContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Motion Swap")
-                    .font(.calm(21, weight: .heavy))
-                    .foregroundColor(.white)
-
-                Text("Turn static photos into dynamic motion scenes")
-                    .font(.calm(14, weight: .medium))
-                    .foregroundColor(CalmTheme.secondaryText)
-            }
-            .padding(.top, 6)
-
-            promoHero(
-                title: "Bring your stills to life",
-                subtitle: "Swap motion styles in one tap.",
-                pillText: "New",
-                paletteIndex: 2,
-                symbol: "figure.walk"
-            )
-
-            galleryGrid(
-                cards: MockData.motionCards,
-                primaryBadgeTitle: "HOT",
-                primaryBadgeColor: Color(hex: "FF5B7F"),
-                secondaryBadgeTitle: "VIDEO",
-                secondaryBadgeColor: Color(hex: "4A9CFF"),
-                trailingIcon: "play.rectangle.on.rectangle"
-            )
-        }
-    }
-
     private var header: some View {
         HStack(spacing: 10) {
             Button(action: handleReviewLoginTitleTap) {
                 HStack(spacing: 8) {
-                    Text("Calm AI")
+                    Text("Glam Pro")
                         .font(.calm(26, weight: .heavy))
                         .foregroundColor(.white)
-
-                    HStack(spacing: 4) {
-                        Image(systemName: "eye")
-                            .font(.system(size: 13, weight: .bold))
-                        Text("01")
-                            .font(.calm(13, weight: .bold))
-                    }
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.horizontal, 9)
-                    .frame(height: 24)
-                    .background(Capsule().fill(Color.white.opacity(0.08)))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
                 .contentShape(Rectangle())
             }
@@ -283,16 +273,26 @@ struct HomeView: View {
                         .frame(width: 1, height: 15)
                     Text(sessionManager.isPro ? "PRO" : "Upgrade")
                         .font(.calm(17, weight: .bold))
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .foregroundColor(Color(hex: "F5C94F"))
                 .padding(.horizontal, 15)
+                .frame(minWidth: sessionManager.isPro ? 118 : 146)
                 .frame(height: 38)
-                .background(Capsule().fill(CalmTheme.goldGradient))
+                .background(Capsule().fill(GlamProTheme.goldGradient))
                 .overlay(Capsule().stroke(Color.white.opacity(0.07), lineWidth: 0.8))
             }
             .buttonStyle(.plain)
+            .layoutPriority(1)
 
-            CircleIconButton(icon: "person.fill", action: openProfile)
+            CircleIconButton(
+                icon: "person.fill",
+                iconColor: .black,
+                backgroundColor: .white,
+                borderColor: Color.black.opacity(0.08),
+                action: openProfile
+            )
         }
     }
 
@@ -303,9 +303,23 @@ struct HomeView: View {
                     selectSection(.saved)
                 }
                 filterChip(title: "All", systemImage: "camera.macro", section: .all)
-                filterChip(title: "New", systemImage: "bolt.fill", badgeText: "6", section: .new)
                 filterChip(title: "Shots", systemImage: "calendar", section: .shots)
-                filterChip(title: "Motion swap", systemImage: "figure.stand", section: .motionSwap)
+                ForEach(appBootstrap.videoSections) { section in
+                    let tabTitle = section.displayTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? "Video"
+                        : section.displayTitle
+                    Button {
+                        selectedRemoteSection = section
+                    } label: {
+                        CapsuleChip(
+                            title: tabTitle,
+                            systemImage: "play.rectangle.fill",
+                            badgeText: nil,
+                            isSelected: false
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(.vertical, 2)
         }
@@ -387,7 +401,7 @@ struct HomeView: View {
 
             Text("Tap the bookmark on any template card and it will appear here.")
                 .font(.calm(14, weight: .medium))
-                .foregroundColor(CalmTheme.secondaryText)
+                .foregroundColor(GlamProTheme.secondaryText)
                 .multilineTextAlignment(.center)
 
             Button {
@@ -398,7 +412,7 @@ struct HomeView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 22)
                     .frame(height: 42)
-                    .background(Capsule().fill(CalmTheme.accentGradient))
+                    .background(Capsule().fill(GlamProTheme.accentGradient))
             }
             .buttonStyle(.plain)
         }
@@ -437,7 +451,7 @@ struct HomeView: View {
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 8)
                                     .frame(height: 18)
-                                    .background(Capsule().fill(CalmTheme.pink))
+                                    .background(Capsule().fill(GlamProTheme.pink))
                             } else {
                                 ZStack {
                                     Circle()
@@ -458,25 +472,6 @@ struct HomeView: View {
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .frame(height: SavedLayout.titleHeight, alignment: .topLeading)
-
-                    HStack(spacing: 4) {
-                        Text(item.scene ?? item.subtitle ?? "Saved")
-                            .font(.calm(11, weight: .medium))
-                            .foregroundColor(CalmTheme.secondaryText)
-                            .lineLimit(1)
-
-                        Spacer(minLength: 0)
-
-                        Image(systemName: item.coverVideoURL != nil ? "play.fill" : "bookmark.fill")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.88))
-
-                        Text(remoteItem.creditsText)
-                            .font(.calm(11, weight: .medium))
-                            .foregroundColor(.white.opacity(0.88))
-                            .lineLimit(1)
-                    }
-                    .frame(height: SavedLayout.metaHeight)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -494,8 +489,8 @@ struct HomeView: View {
         }
     }
 
-    private var discoverCarouselItems: [RemoteFeatureItem] {
-        appBootstrap.discoverItems
+    private var discoverCarouselItems: [HomeBannerItem] {
+        localBannerItems
     }
 
     private var discoverCarouselCardHeight: CGFloat {
@@ -504,9 +499,10 @@ struct HomeView: View {
     }
 
     private var discoverCarousel: some View {
-        VStack(spacing: 10) {
+        let items = localBannerItems
+        return VStack(spacing: 10) {
             TabView(selection: $selectedDiscoverIndex) {
-                ForEach(Array(discoverCarouselItems.enumerated()), id: \.element.id) { index, item in
+                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                     discoverCarouselCard(item)
                         .tag(index)
                 }
@@ -515,14 +511,14 @@ struct HomeView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
 
             HStack(spacing: 9) {
-                ForEach(Array(discoverCarouselItems.indices), id: \.self) { index in
+                ForEach(Array(items.indices), id: \.self) { index in
                     Circle()
                         .fill(index == selectedDiscoverIndex ? Color.white.opacity(0.85) : Color.white.opacity(0.22))
                         .frame(width: 6, height: 6)
                 }
             }
         }
-        .onChange(of: discoverCarouselItems.map(\.id)) { ids in
+        .onChange(of: items.map(\.id)) { ids in
             guard !ids.isEmpty else {
                 selectedDiscoverIndex = 0
                 return
@@ -531,85 +527,84 @@ struct HomeView: View {
         }
     }
 
-    private func discoverCarouselCard(_ item: RemoteFeatureItem) -> some View {
-        ZStack(alignment: .topTrailing) {
-            Button {
-                handleRemoteItemSelection(item)
-            } label: {
-                ZStack(alignment: .bottomLeading) {
-                    ClippedArtworkContainer(cornerRadius: 18) {
-                        if let videoURL = item.coverVideoURL {
-                            RemoteLoopingVideoArtworkView(
-                                videoURL: videoURL,
-                                fallbackImageURL: discoverCoverURL(for: item),
-                                paletteIndex: paletteIndex(for: item.id),
-                                cornerRadius: 18
-                            )
-                        } else if let url = discoverCoverURL(for: item) {
-                            RemoteArtworkView(
-                                url: url,
-                                paletteIndex: paletteIndex(for: item.id),
-                                cornerRadius: 18,
-                                contentMode: .fill
-                            )
-                        } else {
-                            PlaceholderArtwork(paletteIndex: paletteIndex(for: item.id), cornerRadius: 18)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: discoverCarouselCardHeight)
-                    .overlay {
-                        LinearGradient(
-                            colors: [Color.clear, Color.black.opacity(0.1), Color.black.opacity(0.52)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    }
-                    .overlay(alignment: .topLeading) {
-                        HStack(spacing: 6) {
-                            if let badge = item.displayBadge {
-                                remoteBadge(title: badge)
-                            }
-
-                            if item.coverVideoURL != nil {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "play.fill")
-                                        .font(.system(size: 9, weight: .bold))
-                                    Text("Video")
-                                        .font(.calm(10, weight: .heavy))
-                                }
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .frame(height: 20)
-                                .background(Capsule().fill(Color.black.opacity(0.34)))
-                            }
-                        }
-                        .padding(12)
-                    }
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(item.title)
-                            .font(.calm(22, weight: .heavy))
-                            .foregroundColor(.white)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-
-                        Text(item.displaySubtitle)
-                            .font(.calm(14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.9))
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.bottom, 18)
+    private func discoverCarouselCard(_ item: HomeBannerItem) -> some View {
+        Button {
+            handleLocalBannerTap(item)
+        } label: {
+            ZStack(alignment: .bottomLeading) {
+                ClippedArtworkContainer(cornerRadius: 18) {
+                    RemoteLoopingVideoArtworkView(
+                        videoURL: item.videoURL,
+                        fallbackImageURL: nil,
+                        paletteIndex: paletteIndex(for: item.id),
+                        cornerRadius: 18
+                    )
                 }
-            }
-            .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
+                .frame(height: discoverCarouselCardHeight)
+                .overlay {
+                    LinearGradient(
+                        colors: [Color.clear, Color.black.opacity(0.1), Color.black.opacity(0.52)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+                .overlay(alignment: .topLeading) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("Video")
+                            .font(.calm(10, weight: .heavy))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .frame(height: 20)
+                    .background(Capsule().fill(Color.black.opacity(0.34)))
+                    .padding(12)
+                }
 
-            SavedTemplateBookmarkButton(item: item, iconSize: 15, padding: 12)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(item.title)
+                        .font(.calm(22, weight: .heavy))
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                .padding(.horizontal, 18)
+                .padding(.bottom, 18)
+            }
         }
+        .buttonStyle(.plain)
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .id(itemViewIdentity(item))
+        .id(item.id)
+    }
+
+    private var localBannerItems: [HomeBannerItem] {
+        let folder = URL(fileURLWithPath: "/Users/yaxing/Desktop/MyApp/Glam Pro/Banner Slider", isDirectory: true)
+        let configs: [(id: String, title: String, fileName: String, destination: HomeBannerItem.Destination)] = [
+            ("local-banner-1", "AI Chat", "Banner Slider_1.mp4", .aiChat),
+            // Banner 2 temporarily hidden until new video is provided.
+            ("local-banner-3", "Motion Swap", "Banner Slider_3.mp4", .motionSwap)
+        ]
+
+        return configs.compactMap { config in
+            let fileURL = folder.appendingPathComponent(config.fileName)
+            guard FileManager.default.fileExists(atPath: fileURL.path) else {
+                return nil
+            }
+            return HomeBannerItem(id: config.id, title: config.title, videoURL: fileURL, destination: config.destination)
+        }
+    }
+
+    private func handleLocalBannerTap(_ item: HomeBannerItem) {
+        switch item.destination {
+        case .aiChat:
+            openAIChat()
+        case .customStyles:
+            openCustomStyles()
+        case .motionSwap:
+            openMotionSwap()
+        }
     }
 
     private func discoverCoverURL(for item: RemoteFeatureItem) -> URL? {
@@ -703,7 +698,7 @@ struct HomeView: View {
     private var remoteShotsCategoryRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
-                ForEach(appBootstrap.imageSections) { section in
+                ForEach(visibleShotsSections) { section in
                     let isSelected = section.id == activeShotsSection?.id
 
                     Button {
@@ -784,12 +779,22 @@ struct HomeView: View {
                     handleRemoteItemSelection(item)
                 } label: {
                     ClippedArtworkContainer(cornerRadius: shotsCardCornerRadius) {
-                        RemoteArtworkView(
-                            url: item.effectiveCoverURL,
-                            paletteIndex: paletteIndex(for: item.id),
-                            cornerRadius: shotsCardCornerRadius,
-                            contentMode: .fill
-                        )
+                        if let urls = shotsBeforeAfterURLs(for: item) {
+                            HomeShotsBeforeAfterAutoView(
+                                beforeURL: urls.before,
+                                afterURL: urls.after,
+                                fallbackURL: item.effectiveCoverURL,
+                                paletteIndex: paletteIndex(for: item.id),
+                                cornerRadius: shotsCardCornerRadius
+                            )
+                        } else {
+                            RemoteArtworkView(
+                                url: item.effectiveCoverURL,
+                                paletteIndex: paletteIndex(for: item.id),
+                                cornerRadius: shotsCardCornerRadius,
+                                contentMode: .fill
+                            )
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: remoteShotsCardHeight(for: index))
@@ -800,11 +805,15 @@ struct HomeView: View {
                                 fill: remoteShotsPrimaryBadgeColor(for: item),
                                 foreground: .white
                             )
-                            shotBadge(
-                                title: remoteShotsSecondaryBadgeText(for: item),
-                                fill: remoteShotsSecondaryBadgeColor(for: item),
-                                foreground: .white
-                            )
+                            if let requiredCoins = remoteShotsRequiredCoinsText(for: item) {
+                                shotCoinBadge(requiredCoins)
+                            } else {
+                                shotBadge(
+                                    title: "FREE",
+                                    fill: Color(hex: "FFB93A"),
+                                    foreground: .white
+                                )
+                            }
                         }
                         .padding(8)
                     }
@@ -815,6 +824,21 @@ struct HomeView: View {
                 SavedTemplateBookmarkButton(item: item, iconSize: 15, padding: 10)
             }
         }
+    }
+
+    private func shotsBeforeAfterURLs(for item: RemoteFeatureItem) -> (before: URL, after: URL)? {
+        guard
+            let beforeString = item.previewConfig?.beforeImageURLString?.trimmingCharacters(in: .whitespacesAndNewlines),
+            let afterString = item.previewConfig?.afterImageURLString?.trimmingCharacters(in: .whitespacesAndNewlines),
+            !beforeString.isEmpty,
+            !afterString.isEmpty,
+            let beforeURL = URL(string: beforeString),
+            let afterURL = URL(string: afterString)
+        else {
+            return nil
+        }
+
+        return (beforeURL, afterURL)
     }
 
     private func shotsWaterfallGrid<Content: View>(itemCount: Int, @ViewBuilder card: @escaping (Int) -> Content) -> some View {
@@ -847,6 +871,20 @@ struct HomeView: View {
             .background(Capsule().fill(fill))
     }
 
+    private func shotCoinBadge(_ coinsText: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "bitcoinsign.circle.fill")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(Color(hex: "F5C94F"))
+            Text(coinsText)
+                .font(.calm(10, weight: .heavy))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 7)
+        .frame(height: 19)
+        .background(Capsule().fill(Color.black.opacity(0.35)))
+    }
+
     private func remoteShotsCardHeight(for index: Int) -> CGFloat {
         shotsCardHeight(for: index)
     }
@@ -864,17 +902,12 @@ struct HomeView: View {
     }
 
     private func remoteShotsPrimaryBadgeColor(for item: RemoteFeatureItem) -> Color {
-        item.isAd ? Color(hex: "FF8A34") : CalmTheme.pink
+        item.isAd ? Color(hex: "FF8A34") : GlamProTheme.pink
     }
 
-    private func remoteShotsSecondaryBadgeText(for item: RemoteFeatureItem) -> String {
+    private func remoteShotsRequiredCoinsText(for item: RemoteFeatureItem) -> String? {
         let estimatedCredits = item.estimatedCredits ?? 0
-        return estimatedCredits <= 0 ? "FREE" : "\(estimatedCredits)C"
-    }
-
-    private func remoteShotsSecondaryBadgeColor(for item: RemoteFeatureItem) -> Color {
-        let estimatedCredits = item.estimatedCredits ?? 0
-        return estimatedCredits <= 0 ? Color(hex: "FFB93A") : Color(hex: "4A9CFF")
+        return estimatedCredits <= 0 ? nil : "\(estimatedCredits)"
     }
 
     private func remoteTrendsRow(items: [RemoteFeatureItem]) -> some View {
@@ -926,11 +959,6 @@ struct HomeView: View {
                                     Text(item.title)
                                         .font(.calm(13, weight: .bold))
                                         .foregroundColor(.white)
-                                        .lineLimit(1)
-
-                                    Text(item.displaySubtitle)
-                                        .font(.calm(12, weight: .medium))
-                                        .foregroundColor(CalmTheme.secondaryText)
                                         .lineLimit(1)
                                 }
                                 .frame(width: cardWidth, alignment: .leading)
@@ -1020,7 +1048,7 @@ struct HomeView: View {
             .foregroundColor(.white)
             .padding(.horizontal, 8)
             .frame(height: 20)
-            .background(Capsule().fill(CalmTheme.pink))
+            .background(Capsule().fill(GlamProTheme.pink))
     }
 
     private func paletteIndex(for seed: String) -> Int {
@@ -1085,7 +1113,7 @@ struct HomeView: View {
 
                                 Text(card.subtitle)
                                     .font(.calm(12, weight: .medium))
-                                    .foregroundColor(CalmTheme.secondaryText)
+                                    .foregroundColor(GlamProTheme.secondaryText)
                                     .lineLimit(1)
                             }
                             .frame(width: cardWidth, alignment: .leading)
@@ -1146,7 +1174,7 @@ struct RemoteFeatureCollectionPageView: View {
 
     var body: some View {
         ScreenContainer(showBrand: false, topSpacing: 10, bottomSpacing: 14) {
-            CalmTheme.background
+            GlamProTheme.background
         } content: {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: Layout.cardSpacing) {
@@ -1220,7 +1248,7 @@ struct RemoteFeatureCollectionPageView: View {
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 8)
                                     .frame(height: 18)
-                                    .background(Capsule().fill(CalmTheme.pink))
+                                    .background(Capsule().fill(GlamProTheme.pink))
                             } else {
                                 ZStack {
                                     Circle()
@@ -1241,25 +1269,6 @@ struct RemoteFeatureCollectionPageView: View {
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .frame(height: Layout.titleHeight, alignment: .topLeading)
-
-                    HStack(spacing: 4) {
-                        Text(item.scene ?? section.displayTitle)
-                            .font(.calm(11, weight: .medium))
-                            .foregroundColor(CalmTheme.secondaryText)
-                            .lineLimit(1)
-
-                        Spacer(minLength: 0)
-
-                        Image(systemName: item.requiresPreview == true ? "play.fill" : "heart")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.88))
-
-                        Text(item.creditsText)
-                            .font(.calm(11, weight: .medium))
-                            .foregroundColor(.white.opacity(0.88))
-                            .lineLimit(1)
-                    }
-                    .frame(height: Layout.metaHeight)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -1304,6 +1313,129 @@ enum HomeCollectionPage {
     }
 }
 
+private struct HomeShotsBeforeAfterAutoView: View {
+    let beforeURL: URL
+    let afterURL: URL
+    let fallbackURL: URL?
+    let paletteIndex: Int
+    let cornerRadius: CGFloat
+
+    @StateObject private var loader = HomeShotsBeforeAfterImageLoader()
+    @State private var currentIndex = 0
+    @State private var slideOffset: CGFloat = 0
+
+    var body: some View {
+        Group {
+            if let beforeImage = loader.beforeImage, let afterImage = loader.afterImage {
+                sliderContent(beforeImage: beforeImage, afterImage: afterImage)
+            } else {
+                RemoteArtworkView(
+                    url: fallbackURL ?? beforeURL,
+                    paletteIndex: paletteIndex,
+                    cornerRadius: cornerRadius,
+                    contentMode: .fill
+                )
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .overlay(alignment: .topLeading) {
+            cornerTag(title: loader.beforeImage != nil && loader.afterImage != nil ? (currentIndex == 0 ? "Before" : "After") : "Before")
+                .padding(8)
+        }
+        .overlay(alignment: .topTrailing) {
+            cornerTag(title: loader.beforeImage != nil && loader.afterImage != nil ? (currentIndex == 0 ? "1/2" : "2/2") : "1/2")
+                .padding(8)
+        }
+        .task(id: "\(beforeURL.absoluteString)|\(afterURL.absoluteString)") {
+            await loader.load(beforeURL: beforeURL, afterURL: afterURL)
+        }
+    }
+
+    private func sliderContent(beforeImage: UIImage, afterImage: UIImage) -> some View {
+        GeometryReader { proxy in
+            let width = max(proxy.size.width, 1)
+
+            HStack(spacing: 0) {
+                artwork(image: currentIndex == 0 ? beforeImage : afterImage)
+                    .frame(width: width, height: proxy.size.height)
+                artwork(image: currentIndex == 0 ? afterImage : beforeImage)
+                    .frame(width: width, height: proxy.size.height)
+            }
+            .offset(x: -slideOffset)
+            .onReceive(Timer.publish(every: 2.2, on: .main, in: .common).autoconnect()) { _ in
+                guard slideOffset == 0 else { return }
+                withAnimation(.easeInOut(duration: 0.45)) {
+                    slideOffset = width
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                    currentIndex = (currentIndex + 1) % 2
+                    slideOffset = 0
+                }
+            }
+        }
+    }
+
+    private func artwork(image: UIImage) -> some View {
+        ZStack {
+            PlaceholderArtwork(paletteIndex: paletteIndex, cornerRadius: cornerRadius)
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        }
+    }
+
+    private func cornerTag(title: String) -> some View {
+        Text(title)
+            .font(.calm(10, weight: .heavy))
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .frame(height: 20)
+            .background(Color.black.opacity(0.35), in: Capsule())
+    }
+}
+
+@MainActor
+private final class HomeShotsBeforeAfterImageLoader: ObservableObject {
+    @Published var beforeImage: UIImage?
+    @Published var afterImage: UIImage?
+
+    private var lastKey: String?
+    private var loadingTask: Task<Void, Never>?
+
+    func load(beforeURL: URL, afterURL: URL) async {
+        let key = "\(beforeURL.absoluteString)|\(afterURL.absoluteString)"
+        guard key != lastKey else { return }
+        lastKey = key
+
+        loadingTask?.cancel()
+        beforeImage = nil
+        afterImage = nil
+
+        loadingTask = Task { [weak self] in
+            async let before = Self.fetchImage(from: beforeURL)
+            async let after = Self.fetchImage(from: afterURL)
+
+            let (beforeResult, afterResult) = await (before, after)
+            guard !Task.isCancelled else { return }
+
+            self?.beforeImage = beforeResult
+            self?.afterImage = afterResult
+        }
+    }
+
+    private static func fetchImage(from url: URL) async -> UIImage? {
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                return nil
+            }
+            return UIImage(data: data)
+        } catch {
+            return nil
+        }
+    }
+}
+
 struct HomeCollectionPageView: View {
     @EnvironmentObject private var savedTemplatesStore: SavedTemplatesStore
 
@@ -1333,7 +1465,7 @@ struct HomeCollectionPageView: View {
 
     var body: some View {
         ScreenContainer(showBrand: false, topSpacing: 10, bottomSpacing: 14) {
-            CalmTheme.background
+            GlamProTheme.background
         } content: {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: Layout.cardSpacing) {
@@ -1408,7 +1540,7 @@ struct HomeCollectionPageView: View {
                                         .foregroundColor(.white)
                                         .padding(.horizontal, 8)
                                         .frame(height: 18)
-                                        .background(Capsule().fill(CalmTheme.pink))
+                                        .background(Capsule().fill(GlamProTheme.pink))
                                 }
                             }
                             .padding(7)
@@ -1420,25 +1552,6 @@ struct HomeCollectionPageView: View {
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .frame(height: Layout.titleHeight, alignment: .topLeading)
-
-                    HStack(spacing: 4) {
-                        Text(card.author)
-                            .font(.calm(11, weight: .medium))
-                            .foregroundColor(CalmTheme.secondaryText)
-                            .lineLimit(1)
-
-                        Spacer(minLength: 0)
-
-                        Image(systemName: "heart")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.88))
-
-                        Text(card.likesText)
-                            .font(.calm(11, weight: .medium))
-                            .foregroundColor(.white.opacity(0.88))
-                            .lineLimit(1)
-                    }
-                    .frame(height: Layout.metaHeight)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

@@ -19,6 +19,36 @@ struct UploadImageResponse: Decodable {
     }
 }
 
+struct UploadVideoResponse: Decodable {
+    let success: Bool?
+    let videoURLString: String?
+    let videoDurationSeconds: Double?
+    let fileName: String?
+    let fileSize: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case success
+        case videoURLString = "video_url"
+        case videoDurationSeconds = "video_duration_seconds"
+        case fileName = "file_name"
+        case fileSize = "file_size"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        success = try? container.decodeIfPresent(Bool.self, forKey: .success)
+        videoURLString = try? container.decodeIfPresent(String.self, forKey: .videoURLString)
+        videoDurationSeconds = container.decodeLossyDoubleIfPresent(forKey: .videoDurationSeconds)
+        fileName = try? container.decodeIfPresent(String.self, forKey: .fileName)
+        fileSize = container.decodeLossyIntIfPresent(forKey: .fileSize)
+    }
+
+    var videoURL: URL? {
+        guard let videoURLString, !videoURLString.isEmpty else { return nil }
+        return URL(string: videoURLString)
+    }
+}
+
 struct GenerationCreateResponse: Decodable {
     let success: Bool?
     let taskID: String?

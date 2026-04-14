@@ -40,7 +40,7 @@ struct SubscriptionOfferOneView: View {
                 case .unlockPrompt:
                     guidePromptView(
                         title: "Your preview is almost ready",
-                        subtitle: "Unlock full results, unlimited styles, and priority generation with Calm Pro.",
+                        subtitle: "Unlock full results, unlimited styles, and priority generation with Glam Pro.",
                         buttonTitle: "Unlock Result",
                         caption: "Tap anywhere to continue"
                     ) {
@@ -130,7 +130,7 @@ struct SubscriptionOfferOneView: View {
                     .frame(height: 58)
                     .background(
                         RoundedRectangle(cornerRadius: 29, style: .continuous)
-                            .fill(CalmTheme.accentGradient)
+                            .fill(GlamProTheme.accentGradient)
                     )
                 }
                 .buttonStyle(.plain)
@@ -186,7 +186,7 @@ struct SubscriptionOfferOneView: View {
                             .frame(height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                    .fill(CalmTheme.accentGradient)
+                                    .fill(GlamProTheme.accentGradient)
                             )
                     }
                     .buttonStyle(.plain)
@@ -256,7 +256,7 @@ struct SubscriptionOfferOneView: View {
                     .padding(18)
                     .background(
                         RoundedRectangle(cornerRadius: 26, style: .continuous)
-                            .fill(CalmTheme.accentGradient)
+                            .fill(GlamProTheme.accentGradient)
                     )
                 }
                 .buttonStyle(.plain)
@@ -268,8 +268,8 @@ struct SubscriptionOfferOneView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 8) {
-                                SubscriptionPill(title: remainingSeconds > 0 ? "Running" : "Ready", tint: remainingSeconds > 0 ? CalmTheme.orange : CalmTheme.purple)
-                                SubscriptionPill(title: createdTimeText, tint: CalmTheme.sky)
+                                SubscriptionPill(title: remainingSeconds > 0 ? "Running" : "Ready", tint: remainingSeconds > 0 ? GlamProTheme.orange : GlamProTheme.purple)
+                                SubscriptionPill(title: createdTimeText, tint: GlamProTheme.sky)
                             }
 
                             Text(selectedItem?.title ?? "AI Creation")
@@ -312,7 +312,7 @@ struct SubscriptionOfferOneView: View {
 
             Spacer(minLength: 0)
 
-            SubscriptionPill(title: phase == .countdown ? formatCountdown(remainingSeconds) : "Calm Pro", tint: phase == .countdown ? CalmTheme.orange : CalmTheme.purple)
+            SubscriptionPill(title: phase == .countdown ? formatCountdown(remainingSeconds) : "Glam Pro", tint: phase == .countdown ? GlamProTheme.orange : GlamProTheme.purple)
         }
         .frame(maxWidth: .infinity)
     }
@@ -551,7 +551,7 @@ struct SubscriptionOfferTwoView: View {
     private func paywallPanel(bottomInset: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Unlock Calm Pro")
+                Text("Unlock Glam Pro")
                     .font(.calm(32, weight: .heavy))
                     .foregroundColor(.white)
 
@@ -595,7 +595,7 @@ struct SubscriptionOfferTwoView: View {
                 .frame(height: 56)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(canInteract ? LinearGradient(colors: [CalmTheme.purple, Color(hex: "8D54FF")], startPoint: .leading, endPoint: .trailing) : LinearGradient(colors: [Color.white.opacity(0.18), Color.white.opacity(0.12)], startPoint: .leading, endPoint: .trailing))
+                        .fill(canInteract ? LinearGradient(colors: [GlamProTheme.purple, Color(hex: "8D54FF")], startPoint: .leading, endPoint: .trailing) : LinearGradient(colors: [Color.white.opacity(0.18), Color.white.opacity(0.12)], startPoint: .leading, endPoint: .trailing))
                 )
             }
             .buttonStyle(.plain)
@@ -1372,7 +1372,7 @@ private struct SubscriptionGuideGeneratingView: View {
 
                 Circle()
                     .trim(from: 0, to: progress)
-                    .stroke(CalmTheme.accentGradient, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                    .stroke(GlamProTheme.accentGradient, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                     .frame(width: 170, height: 170)
                     .rotationEffect(.degrees(-90))
 
@@ -1450,7 +1450,7 @@ private struct SubscriptionFeatureRow: View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(CalmTheme.purple)
+                .foregroundColor(GlamProTheme.purple)
                 .frame(width: 22)
 
             Text(title)

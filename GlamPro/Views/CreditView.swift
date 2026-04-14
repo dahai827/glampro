@@ -100,13 +100,13 @@ struct CreditView: View {
             }
 
             Circle()
-                .fill(CalmTheme.purple.opacity(0.22))
+                .fill(GlamProTheme.purple.opacity(0.22))
                 .frame(width: 260, height: 260)
                 .blur(radius: 28)
                 .offset(x: -110, y: -220)
 
             Circle()
-                .fill(CalmTheme.orange.opacity(0.18))
+                .fill(GlamProTheme.orange.opacity(0.18))
                 .frame(width: 300, height: 300)
                 .blur(radius: 32)
                 .offset(x: 120, y: -140)
@@ -207,7 +207,7 @@ struct CreditView: View {
         VStack(spacing: 14) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(CalmTheme.orange)
+                .foregroundColor(GlamProTheme.orange)
 
             Text("Unable to load coin packages")
                 .font(.calm(18, weight: .heavy))
@@ -230,7 +230,7 @@ struct CreditView: View {
                     .frame(height: 52)
                     .background(
                         RoundedRectangle(cornerRadius: 26, style: .continuous)
-                            .fill(CalmTheme.accentGradient)
+                            .fill(GlamProTheme.accentGradient)
                     )
             }
             .buttonStyle(.plain)
@@ -256,7 +256,7 @@ struct CreditView: View {
         VStack(spacing: 14) {
             Image(systemName: "creditcard.trianglebadge.exclamationmark")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(CalmTheme.orange)
+                .foregroundColor(GlamProTheme.orange)
 
             Text("Coin packages unavailable")
                 .font(.calm(18, weight: .heavy))
@@ -304,7 +304,7 @@ struct CreditView: View {
                 .frame(height: 56)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(canContinue ? CalmTheme.accentGradient : LinearGradient(colors: [Color.white.opacity(0.16), Color.white.opacity(0.10)], startPoint: .leading, endPoint: .trailing))
+                        .fill(canContinue ? GlamProTheme.accentGradient : LinearGradient(colors: [Color.white.opacity(0.16), Color.white.opacity(0.10)], startPoint: .leading, endPoint: .trailing))
                 )
             }
             .buttonStyle(.plain)

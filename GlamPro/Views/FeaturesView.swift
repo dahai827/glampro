@@ -5,8 +5,10 @@ import Photos
 
 struct FeaturesView: View {
     let onSelectFeature: (FeatureCardModel) -> Void
+    let onSelectVideoSection: (RemoteFeatureSection) -> Void
     let onClose: () -> Void
 
+    @EnvironmentObject private var appBootstrap: AppBootstrapStore
     @GestureState private var dragTranslation: CGFloat = 0
 
     private let columns = [
@@ -16,11 +18,20 @@ struct FeaturesView: View {
 
     private let dismissThreshold: CGFloat = 120
 
+    private var windowSafeAreaInsets: UIEdgeInsets {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)?
+            .safeAreaInsets ?? .zero
+    }
+
     var body: some View {
         GeometryReader { proxy in
-            // Keep only a slim reveal near Dynamic Island bottom across devices.
-            let topReveal = min(max(proxy.safeAreaInsets.top - 26, 22), 34)
-            let sheetHeight = max(proxy.size.height - topReveal, 520)
+            // Use window safe area to avoid incorrect top inset under ignoresSafeArea.
+            let safeTop = max(proxy.safeAreaInsets.top, windowSafeAreaInsets.top)
+            let topInset = safeTop
+            let sheetHeight = max(proxy.size.height - topInset, 520)
 
             ZStack(alignment: .bottom) {
                 Color.black.opacity(0.12)
@@ -33,7 +44,7 @@ struct FeaturesView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .ignoresSafeArea(edges: .bottom)
+        .ignoresSafeArea()
     }
 
     private func sheetBody(height: CGFloat) -> some View {
@@ -52,8 +63,12 @@ struct FeaturesView: View {
 
             ScrollView(showsIndicators: false) {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 24) {
-                    ForEach(MockData.featureCards) { item in
+                    ForEach(localFeatureCards) { item in
                         featureCard(item)
+                    }
+
+                    ForEach(videoSectionCards) { card in
+                        videoSectionCard(card)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -64,7 +79,7 @@ struct FeaturesView: View {
         .frame(height: height, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(CalmTheme.background)
+                .fill(GlamProTheme.background)
                 .overlay(
                     RoundedRectangle(cornerRadius: 34, style: .continuous)
                         .stroke(Color.white.opacity(0.06), lineWidth: 1)
@@ -72,6 +87,24 @@ struct FeaturesView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
         .shadow(color: Color.black.opacity(0.28), radius: 24, x: 0, y: -4)
+    }
+
+    private var localFeatureCards: [FeatureCardModel] {
+        Array(MockData.featureCards.prefix(4))
+    }
+
+    private var videoSectionCards: [FeatureVideoSectionCard] {
+        Array(appBootstrap.videoSections.prefix(4)).map { section in
+            let symbolCandidates = ["play.rectangle.fill", "video.fill", "film.fill", "sparkles.tv.fill"]
+            let index = abs(section.id.hashValue) % symbolCandidates.count
+            return FeatureVideoSectionCard(
+                section: section,
+                title: section.displayTitle,
+                subtitle: section.displaySubtitle ?? "Explore this video section",
+                symbol: symbolCandidates[index],
+                paletteIndex: abs(section.id.hashValue) % 8
+            )
+        }
     }
 
     private func featureCard(_ item: FeatureCardModel) -> some View {
@@ -95,7 +128,42 @@ struct FeaturesView: View {
 
                     Text(item.subtitle)
                         .font(.calm(12, weight: .medium))
-                        .foregroundColor(CalmTheme.secondaryText)
+                        .foregroundColor(GlamProTheme.secondaryText)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, minHeight: 42, alignment: .topLeading)
+            }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func videoSectionCard(_ card: FeatureVideoSectionCard) -> some View {
+        Button {
+            onSelectVideoSection(card.section)
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                PlaceholderArtwork(paletteIndex: card.paletteIndex, cornerRadius: 14, symbol: card.symbol)
+                    .frame(height: 124)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(alignment: .bottomLeading) {
+                        Image(systemName: card.symbol)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(10)
+                    }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(card.title)
+                        .font(.calm(14, weight: .heavy))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+
+                    Text(card.subtitle)
+                        .font(.calm(12, weight: .medium))
+                        .foregroundColor(GlamProTheme.secondaryText)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -119,6 +187,16 @@ struct FeaturesView: View {
                 }
             }
     }
+}
+
+private struct FeatureVideoSectionCard: Identifiable {
+    let section: RemoteFeatureSection
+    let title: String
+    let subtitle: String
+    let symbol: String
+    let paletteIndex: Int
+
+    var id: String { section.id }
 }
 
 struct AIChatView: View {
@@ -146,7 +224,7 @@ struct AIChatView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            CalmTheme.background.ignoresSafeArea()
+            GlamProTheme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 headerRow
@@ -196,7 +274,7 @@ struct AIChatView: View {
             }
         }
         .sheet(isPresented: $isShowingMediaPicker) {
-            FeatureMediaPicker(sourceType: pickerSource) { media in
+            FeatureMediaPicker(sourceType: pickerSource, mode: .imageOrVideo) { media in
                 selectedAttachmentMedia = media
             }
             .ignoresSafeArea()
@@ -223,7 +301,7 @@ struct AIChatView: View {
 
             HStack(spacing: 8) {
                 BrandOrb(size: 24)
-                Text("Glam AI")
+                Text("AI Chat")
                     .font(.calm(42, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -260,7 +338,7 @@ struct AIChatView: View {
     }
 
     private var introMessage: some View {
-        Text("Hey! I’m Glam AI. Send me a photo and I’ll edit it however you want — change outfits, swap backgrounds, adjust details, or put people together in one scene. I can also create images from scratch and turn photos into videos. What should we make?")
+        Text("Hi! I can edit your photos any way you like — change outfits, swap backgrounds, refine details, or combine people into one scene. I can also create images from scratch and turn photos into videos. What should we create?")
             .font(.calm(15.5, weight: .medium))
             .foregroundColor(.white.opacity(0.9))
             .multilineTextAlignment(.leading)
@@ -276,7 +354,7 @@ struct AIChatView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 12, weight: .bold))
-                        Text("Tools")
+                        Text("AI Chat")
                             .font(.calm(15, weight: .bold))
                     }
                     .foregroundColor(.white.opacity(0.95))
@@ -313,19 +391,29 @@ struct AIChatView: View {
                 }
             }
 
-            HStack(spacing: 10) {
-                TextField("Describe your idea or ask", text: $inputText)
-                    .font(.calm(17, weight: .medium))
-                    .foregroundColor(.white)
-                    .textInputAutocapitalization(.sentences)
-                    .disableAutocorrection(false)
-                    .textFieldStyle(.plain)
-                    .submitLabel(.send)
-                    .focused($isInputFocused)
-                    .onSubmit {
-                        guard !isSubmitting, canSubmitAIChat else { return }
-                        Task { await submitAIChat() }
+            HStack(alignment: .bottom, spacing: 10) {
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $inputText)
+                        .font(.calm(17, weight: .medium))
+                        .foregroundColor(.white)
+                        .modifier(FeatureHideScrollContentBackground())
+                        .focused($isInputFocused)
+                        .frame(minHeight: 26, maxHeight: 92)
+                        .padding(.horizontal, 2)
+                        .padding(.vertical, 2)
+                        .onTapGesture {
+                            isInputFocused = true
+                        }
+
+                    if inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text("Describe your idea or ask")
+                            .font(.calm(17, weight: .medium))
+                            .foregroundColor(.white.opacity(0.55))
+                            .padding(.leading, 6)
+                            .padding(.top, 10)
+                            .allowsHitTesting(false)
                     }
+                }
 
                 Button(action: {
                     guard !isSubmitting else { return }
@@ -400,6 +488,16 @@ struct AIChatView: View {
                 }
             }
             .frame(maxWidth: .infinity)
+        }
+        .ifAvailableScrollDismissesKeyboardInteractively()
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 8)
+                .onChanged { _ in
+                    dismissAIChatKeyboard()
+                }
+        )
+        .onTapGesture {
+            dismissAIChatKeyboard()
         }
     }
 
@@ -503,15 +601,23 @@ struct AIChatView: View {
 
         inputText = ""
         selectedAttachmentMedia = nil
-        isInputFocused = false
+        dismissAIChatKeyboard()
 
         do {
             let response: GenerationCreateResponse = try await sessionManager.performAuthenticatedRequest { token in
-                let imageURL = try await FeatureAPIBridge.uploadMediaIfNeeded(
+                let uploadedMediaURL = try await FeatureAPIBridge.uploadMediaIfNeeded(
                     selectedMediaForRequest,
                     apiClient: .shared,
                     bearerToken: token
-                ) ?? ""
+                )
+                let imageURL = if let uploadedMediaURL, !uploadedMediaURL.isEmpty {
+                    uploadedMediaURL
+                } else {
+                    try await FeatureAPIBridge.uploadAIChatFallbackImage(
+                        apiClient: .shared,
+                        bearerToken: token
+                    )
+                }
 
                 return try await APIClient.shared.postJSON(
                     path: "image-to-image",
@@ -588,6 +694,27 @@ struct AIChatView: View {
             alertItem = FeatureAlertItem(title: "Save Failed", message: error.localizedDescription)
         }
     }
+
+    private func dismissAIChatKeyboard() {
+        isInputFocused = false
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func ifAvailableScrollDismissesKeyboardInteractively() -> some View {
+        if #available(iOS 16.0, *) {
+            self.scrollDismissesKeyboard(.interactively)
+        } else {
+            self
+        }
+    }
 }
 
 struct CustomStylesView: View {
@@ -611,7 +738,7 @@ struct CustomStylesView: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .top) {
-                CalmTheme.background.ignoresSafeArea()
+                GlamProTheme.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     header
@@ -662,7 +789,7 @@ struct CustomStylesView: View {
             }
         }
         .sheet(isPresented: $isShowingMediaPicker) {
-            FeatureMediaPicker(sourceType: pickerSource) { media in
+            FeatureMediaPicker(sourceType: pickerSource, mode: .imageOrVideo) { media in
                 selectedMediaAsset = media
             }
             .ignoresSafeArea()
@@ -732,15 +859,11 @@ struct CustomStylesView: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.88))
 
-                Text("Select Generation Mode")
+                Text("custom style")
                     .font(.calm(16, weight: .bold))
                     .foregroundColor(.white.opacity(0.65))
 
                 Spacer()
-
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.8))
             }
             .padding(.horizontal, 10)
             .frame(height: 38)
@@ -911,18 +1034,36 @@ struct CustomStylesView: View {
 }
 
 struct MotionSwapView: View {
+    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var appBootstrap: AppBootstrapStore
+    @EnvironmentObject private var sessionManager: SessionManager
+    @EnvironmentObject private var previewGenerationStore: PreviewGenerationStore
+
+    @State private var promptText = "A character dances"
+    @FocusState private var isPromptFocused: Bool
+    @State private var pickerSource: UIImagePickerController.SourceType = .photoLibrary
+    @State private var isShowingMediaPicker = false
+    @State private var showUploadSourceSheet = false
+    @State private var activeUploadTarget: MotionSwapUploadTarget = .image
+    @State private var selectedImageAsset: UIImage?
+    @State private var selectedVideoAssetURL: URL?
+    @State private var selectedVideoPreview: UIImage?
+    @State private var submitStage: FeatureSubmitStage = .idle
+    @State private var alertItem: FeatureAlertItem?
+
     let onClose: () -> Void
 
     private let pageHorizontalPadding: CGFloat = 15
 
     var body: some View {
         ZStack {
-            CalmTheme.background.ignoresSafeArea()
+            GlamProTheme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header
                     .padding(.top, 20)
                     .padding(.horizontal, pageHorizontalPadding)
+                    .zIndex(60)
 
                 uploadCards
                     .padding(.top, 16)
@@ -936,23 +1077,92 @@ struct MotionSwapView: View {
                     .padding(.top, 16)
                     .padding(.horizontal, pageHorizontalPadding)
 
-                Spacer(minLength: 4)
-
-                generationsPanel
+                Spacer(minLength: 20)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .overlay {
+            if showUploadSourceSheet {
+                FeatureUploadSourceSheet(
+                    onClose: { showUploadSourceSheet = false },
+                    onPickPhotoOrVideo: {
+                        showUploadSourceSheet = false
+                        pickerSource = .photoLibrary
+                        isShowingMediaPicker = true
+                    },
+                    onPickCamera: {
+                        showUploadSourceSheet = false
+                        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+                            alertItem = FeatureAlertItem(
+                                title: "Camera Unavailable",
+                                message: "This device does not support camera capture."
+                            )
+                            return
+                        }
+                        pickerSource = .camera
+                        isShowingMediaPicker = true
+                    }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(30)
+            }
+        }
+        .sheet(isPresented: $isShowingMediaPicker) {
+            FeatureMediaPicker(sourceType: pickerSource, mode: pickerModeForActiveTarget) { media in
+                switch (activeUploadTarget, media) {
+                case (.image, .image(let image)):
+                    selectedImageAsset = image
+                    print("[MotionSwap] image selected")
+                case (.video, .video(let url)):
+                    guard let localDurationSeconds = FeatureAPIBridge.localVideoDurationSeconds(from: url) else {
+                        print("[MotionSwap] video select failed: unable to read duration")
+                        alertItem = FeatureAlertItem(
+                            title: "Video Invalid",
+                            message: "Unable to read this video's duration. Please choose another video."
+                        )
+                        return
+                    }
+                    guard localDurationSeconds < 10 else {
+                        print("[MotionSwap] video rejected: duration=\(localDurationSeconds)s >= 10s")
+                        alertItem = FeatureAlertItem(
+                            title: "Video Too Long",
+                            message: "Please choose a video shorter than 10 seconds."
+                        )
+                        return
+                    }
+                    selectedVideoAssetURL = url
+                    selectedVideoPreview = FeaturePickedMedia.video(url).previewImage
+                    print("[MotionSwap] video selected, duration=\(String(format: "%.2f", localDurationSeconds))s")
+                case (.image, .video):
+                    print("[MotionSwap] wrong media type: expected image, got video")
+                    alertItem = FeatureAlertItem(title: "Image Required", message: "Please choose an image for the character card.")
+                case (.video, .image):
+                    print("[MotionSwap] wrong media type: expected video, got image")
+                    alertItem = FeatureAlertItem(title: "Video Required", message: "Please choose a video for the motion card.")
+                }
+            }
+            .ignoresSafeArea()
+        }
+        .alert(item: $alertItem) { item in
+            Alert(
+                title: Text(item.title),
+                message: Text(item.message),
+                dismissButton: .default(Text("OK")) {
+                    alertItem = nil
+                }
+            )
         }
     }
 
     private var header: some View {
         ZStack {
-            Text("Create Style")
+            Text("Motion Swap")
                 .font(.calm(22, weight: .bold))
                 .foregroundColor(.white)
                 .lineLimit(1)
 
             HStack {
-                CircleIconButton(icon: "xmark", size: 34, action: onClose)
+                CircleIconButton(icon: "xmark", size: 34, action: handleCloseAction)
                 Spacer()
             }
         }
@@ -962,30 +1172,59 @@ struct MotionSwapView: View {
         HStack(spacing: 8) {
             uploadCard(
                 title: "Pick a photo for\nyour character",
-                buttonTitle: "Add Image"
+                buttonTitle: selectedImageAsset == nil ? "Add Image" : "Change Image",
+                previewImage: selectedImageAsset,
+                action: {
+                    activeUploadTarget = .image
+                    showUploadSourceSheet = true
+                }
             )
 
             uploadCard(
                 title: "The motion from\nthe video will be\napplied to your\nimage",
-                buttonTitle: "Add Video"
+                buttonTitle: selectedVideoAssetURL == nil ? "Add Video" : "Change Video",
+                previewImage: selectedVideoPreview,
+                action: {
+                    activeUploadTarget = .video
+                    showUploadSourceSheet = true
+                }
             )
         }
         .frame(height: 198)
     }
 
-    private func uploadCard(title: String, buttonTitle: String) -> some View {
+    private func uploadCard(
+        title: String,
+        buttonTitle: String,
+        previewImage: UIImage?,
+        action: @escaping () -> Void
+    ) -> some View {
         RoundedRectangle(cornerRadius: 14, style: .continuous)
             .fill(Color.white.opacity(0.11))
             .overlay {
-                VStack(spacing: 18) {
-                    Text(title)
-                        .font(.calm(13, weight: .bold))
-                        .foregroundColor(.white.opacity(0.52))
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(1.4)
-                        .frame(height: 66, alignment: .top)
+                ZStack {
+                    if let previewImage {
+                        Image(uiImage: previewImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .clipped()
+                            .overlay(Color.black.opacity(0.25))
+                    }
 
-                    Button(action: {}) {
+                    VStack {
+                        Text(title)
+                            .font(.calm(13, weight: .bold))
+                            .foregroundColor(.white.opacity(0.78))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(1.4)
+                            .frame(height: 66, alignment: .top)
+                            .padding(.top, 18)
+
+                        Spacer(minLength: 0)
+                    }
+
+                    Button(action: action) {
                         Text(buttonTitle)
                             .font(.calm(16, weight: .bold))
                             .foregroundColor(Color.black.opacity(0.82))
@@ -998,11 +1237,9 @@ struct MotionSwapView: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, 16)
-
-                    Spacer(minLength: 0)
                 }
-                .padding(.top, 18)
             }
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var motionPromptCard: some View {
@@ -1017,10 +1254,6 @@ struct MotionSwapView: View {
                     .foregroundColor(.white.opacity(0.92))
 
                 Spacer()
-
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.8))
             }
             .padding(.horizontal, 10)
             .frame(height: 38)
@@ -1029,15 +1262,26 @@ struct MotionSwapView: View {
                     .fill(Color.white.opacity(0.12))
             )
 
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Color.clear)
-                .overlay(alignment: .topLeading) {
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: $promptText)
+                    .font(.calm(16, weight: .medium))
+                    .foregroundColor(.white)
+                    .modifier(FeatureHideScrollContentBackground())
+                    .background(Color.clear)
+                    .focused($isPromptFocused)
+                    .padding(.horizontal, 2)
+                    .padding(.top, 2)
+
+                if promptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text("A character dances")
                         .font(.calm(16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.88))
+                        .foregroundColor(.white.opacity(0.55))
                         .padding(.leading, 6)
-                        .padding(.top, 12)
+                        .padding(.top, 10)
+                        .allowsHitTesting(false)
                 }
+            }
+            .contentShape(Rectangle())
         }
         .padding(.top, 8)
         .padding(.horizontal, 8)
@@ -1051,48 +1295,191 @@ struct MotionSwapView: View {
 
     private var generateSection: some View {
         VStack(spacing: 8) {
-            Button(action: {}) {
-                Text("Generate")
-                    .font(.calm(18, weight: .bold))
-                    .foregroundColor(.white.opacity(0.9))
+            Button(action: {
+                Task { await submitMotionSwap() }
+            }) {
+                HStack(spacing: 8) {
+                    if submitStage != .idle {
+                        ProgressView()
+                            .tint(Color.black.opacity(0.8))
+                    }
+                    Text(generateButtonTitle)
+                        .font(.calm(18, weight: .bold))
+                        .foregroundColor(generateButtonTextColor)
+                }
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
                     .background(
                         Capsule()
-                            .fill(Color.white.opacity(0.1))
+                            .fill(generateButtonBackground)
                     )
             }
             .buttonStyle(.plain)
+            .disabled(!canSubmitMotionSwap)
 
-            Text("1 Coin")
+            Text("\(requiredCoins) Coin\(requiredCoins > 1 ? "s" : "")")
                 .font(.calm(13, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
+
+            if selectedImageAsset != nil || selectedVideoAssetURL != nil {
+                Text("\(selectedImageAsset == nil ? 0 : 1) image, \(selectedVideoAssetURL == nil ? 0 : 1) video selected")
+                    .font(.calm(12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+            }
         }
     }
 
-    private var generationsPanel: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Capsule()
-                .fill(Color.white.opacity(0.35))
-                .frame(width: 50, height: 5)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 6)
-
-            Text("My Generations")
-                .font(.calm(18, weight: .bold))
-                .foregroundColor(.white.opacity(0.58))
-                .padding(.top, 14)
-                .padding(.horizontal, 15)
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 154)
-        .background(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .fill(Color.white.opacity(0.12))
-        )
+    private var canSubmitMotionSwap: Bool {
+        guard submitStage == .idle else { return false }
+        return selectedImageAsset != nil && selectedVideoAssetURL != nil
     }
+
+    private var requiredCoins: Int {
+        if let dynamic = appBootstrap.featureCards.first(where: { item in
+            let title = item.title.lowercased()
+            let model = (item.modelType ?? "").lowercased()
+            return title.contains("motion") || model.contains("dongzuo")
+        })?.estimatedCredits, dynamic > 0 {
+            return dynamic
+        }
+        return 1
+    }
+
+    private var pickerModeForActiveTarget: FeatureMediaPickerMode {
+        switch activeUploadTarget {
+        case .image:
+            return .imageOnly
+        case .video:
+            return .videoOnly
+        }
+    }
+
+    private var generateButtonTitle: String {
+        switch submitStage {
+        case .idle:
+            return "Generate"
+        case .uploading:
+            return "Uploading Assets..."
+        case .creatingTask:
+            return "Creating Task..."
+        }
+    }
+
+    private var generateButtonBackground: Color {
+        (canSubmitMotionSwap || submitStage != .idle) ? Color.white.opacity(0.94) : Color.white.opacity(0.1)
+    }
+
+    private var generateButtonTextColor: Color {
+        (canSubmitMotionSwap || submitStage != .idle) ? Color.black.opacity(0.86) : Color.white.opacity(0.42)
+    }
+
+    private func submitMotionSwap() async {
+        let prompt = promptText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let selectedImageAsset, let selectedVideoAssetURL else {
+            print("[MotionSwap] submit blocked: missing image or video")
+            alertItem = FeatureAlertItem(title: "Media Required", message: "Please upload both character image and motion video.")
+            return
+        }
+
+        submitStage = .uploading
+        print("[MotionSwap] submit start, promptLength=\(prompt.count), requiredCoins=\(requiredCoins)")
+        defer { submitStage = .idle }
+
+        do {
+            // Required flow before image-to-dongzuo-video:
+            // 1) upload-image -> image_url
+            // 2) upload-video -> video_url + video_duration_seconds
+            // 3) call image-to-dongzuo-video with merged params
+            let response: GenerationCreateResponse = try await sessionManager.performAuthenticatedRequest { token in
+                async let uploadedImageURL = FeatureAPIBridge.uploadImageAsset(
+                    selectedImageAsset,
+                    apiClient: .shared,
+                    bearerToken: token
+                )
+                async let uploadedVideo = FeatureAPIBridge.uploadVideoAsset(
+                    selectedVideoAssetURL,
+                    apiClient: .shared,
+                    bearerToken: token
+                )
+
+                let (imageURL, uploadedVideoResult) = try await (uploadedImageURL, uploadedVideo)
+                print("[MotionSwap] upload done, imageURL=\(imageURL), videoURL=\(uploadedVideoResult.videoURL), duration=\(uploadedVideoResult.videoDurationSeconds)s")
+
+                await MainActor.run {
+                    submitStage = .creatingTask
+                }
+                print("[MotionSwap] creating image-to-dongzuo-video task...")
+
+                return try await APIClient.shared.postJSON(
+                    path: "image-to-dongzuo-video",
+                    jsonObject: [
+                        "item_id": "temp-k06ihvprh",
+                        "image_url": imageURL,
+                        "video_url": uploadedVideoResult.videoURL,
+                        "video_duration_seconds": uploadedVideoResult.videoDurationSeconds
+                    ],
+                    bearerToken: token,
+                    timeoutInterval: 180
+                )
+            }
+
+            if let credits = response.creditsBalance {
+                sessionManager.applyCreditsBalance(credits)
+            }
+            print("[MotionSwap] task created, taskID=\(response.taskID ?? "<nil>"), creditsUsed=\(response.creditsUsed ?? -1), creditsBalance=\(response.creditsBalance ?? -1)")
+
+            guard let flowItem = FeatureAPIBridge.makeFeatureFlowItem(
+                id: "temp-k06ihvprh",
+                title: "Motion Swap",
+                modelType: "image_to_dongzuo_video",
+                prompt: prompt.isEmpty ? "Motion Swap" : prompt,
+                estimatedCredits: requiredCoins
+            ) else {
+                throw APIError.missingData
+            }
+
+            previewGenerationStore.beginExternalGeneration(item: flowItem)
+            try previewGenerationStore.completeExternalGenerationCreation(with: response, isVideo: true)
+            print("[MotionSwap] route -> generationProgress")
+            appState.replace(with: .generationProgress)
+        } catch {
+            print("[MotionSwap] submit failed: \(error.localizedDescription)")
+            alertItem = FeatureAlertItem(
+                title: "Request Failed",
+                message: resolvedMotionSwapErrorMessage(from: error)
+            )
+        }
+    }
+
+    private func handleCloseAction() {
+        isPromptFocused = false
+        showUploadSourceSheet = false
+        if isShowingMediaPicker {
+            isShowingMediaPicker = false
+        }
+        alertItem = nil
+        onClose()
+    }
+
+    private func resolvedMotionSwapErrorMessage(from error: Error) -> String {
+        let raw = error.localizedDescription
+        let lowered = raw.lowercased()
+
+        if lowered.contains("50513") || lowered.contains("pre video risk notpass") {
+            return "This video failed content safety review. Please choose another motion video and try again."
+        }
+
+        if lowered.contains("video_duration_seconds") || lowered.contains("shorter than 10 seconds") || lowered.contains("shorter than 30 seconds") {
+            return "Please upload a video shorter than 10 seconds."
+        }
+
+        return raw
+    }
+}
+
+private enum MotionSwapUploadTarget {
+    case image
+    case video
 }
 
 private struct FeatureHideScrollContentBackground: ViewModifier {
@@ -1150,18 +1537,13 @@ private struct FeatureImagePreviewSheet: View {
                         .resizable()
                         .scaledToFit()
                 } else if let imageURL {
-                    AsyncImage(url: imageURL) { phase in
-                        switch phase {
-                        case .success(let img):
-                            img.resizable().scaledToFit()
-                        case .failure:
-                            Text("Failed to load")
-                                .font(.calm(16, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-                        default:
-                            ProgressView()
-                                .tint(.white)
-                        }
+                    GlamCachedAsyncImage(url: imageURL) { image in
+                        image
+                            .resizable()
+                            .scaledToFit()
+                    } placeholder: {
+                        ProgressView()
+                            .tint(.white)
                     }
                 }
             }
@@ -1208,6 +1590,67 @@ private extension FeaturePickedMedia {
 }
 
 private enum FeatureAPIBridge {
+    private static let aiChatFallbackImageURLCacheKey = "feature.aichat.fallback.image_url"
+
+    struct UploadedVideoAsset {
+        let videoURL: String
+        let videoDurationSeconds: Double
+    }
+
+    static func uploadImageAsset(
+        _ image: UIImage,
+        apiClient: APIClient,
+        bearerToken: String
+    ) async throws -> String {
+        print("[MotionSwap] upload-image start")
+        let data = try await prepareImageUploadData(image)
+        print("[MotionSwap] upload-image payload bytes=\(data.count)")
+        let response = try await apiClient.uploadImage(
+            data: data,
+            fileName: "feature-\(UUID().uuidString).jpg",
+            mimeType: "image/jpeg",
+            bearerToken: bearerToken
+        )
+        guard let imageURL = response.imageURL?.absoluteString, !imageURL.isEmpty else {
+            throw APIError.missingData
+        }
+        print("[MotionSwap] upload-image success, imageURL=\(imageURL)")
+        return imageURL
+    }
+
+    static func uploadVideoAsset(
+        _ videoFileURL: URL,
+        apiClient: APIClient,
+        bearerToken: String
+    ) async throws -> UploadedVideoAsset {
+        print("[MotionSwap] upload-video start, localURL=\(videoFileURL.lastPathComponent)")
+        let (data, fileName, mimeType) = try await prepareVideoUploadData(videoFileURL)
+        print("[MotionSwap] upload-video payload bytes=\(data.count), fileName=\(fileName), mimeType=\(mimeType)")
+        let response = try await apiClient.uploadVideo(
+            data: data,
+            fileName: fileName,
+            mimeType: mimeType,
+            bearerToken: bearerToken
+        )
+
+        guard let videoURL = response.videoURL?.absoluteString, !videoURL.isEmpty else {
+            throw APIError.missingData
+        }
+
+        guard let videoDurationSeconds = response.videoDurationSeconds, videoDurationSeconds > 0 else {
+            throw APIError.invalidStatusCode(400, "upload-video did not return video_duration_seconds")
+        }
+        guard videoDurationSeconds < 10 else {
+            throw APIError.invalidStatusCode(400, "Please upload a video shorter than 10 seconds.")
+        }
+        print("[MotionSwap] upload-video success, videoURL=\(videoURL), duration=\(videoDurationSeconds)s")
+
+        return UploadedVideoAsset(
+            videoURL: videoURL,
+            videoDurationSeconds: videoDurationSeconds
+        )
+    }
+
     static func uploadMediaIfNeeded(
         _ media: FeaturePickedMedia?,
         apiClient: APIClient,
@@ -1217,14 +1660,7 @@ private enum FeatureAPIBridge {
 
         switch media {
         case .image(let image):
-            let data = try await prepareImageUploadData(image)
-            let response = try await apiClient.uploadImage(
-                data: data,
-                fileName: "feature-\(UUID().uuidString).jpg",
-                mimeType: "image/jpeg",
-                bearerToken: bearerToken
-            )
-            return response.imageURL?.absoluteString
+            return try await uploadImageAsset(image, apiClient: apiClient, bearerToken: bearerToken)
         case .video(let url):
             let (data, fileName, mimeType) = try await prepareVideoUploadData(url)
             let response = try await apiClient.uploadImage(
@@ -1235,6 +1671,30 @@ private enum FeatureAPIBridge {
             )
             return response.imageURL?.absoluteString
         }
+    }
+
+    static func uploadAIChatFallbackImage(
+        apiClient: APIClient,
+        bearerToken: String
+    ) async throws -> String {
+        let userDefaults = UserDefaults.standard
+        if let cachedURL = userDefaults.string(forKey: aiChatFallbackImageURLCacheKey), !cachedURL.isEmpty {
+            return cachedURL
+        }
+
+        let fallbackData = try await prepareAIChatFallbackImageData()
+        let response = try await apiClient.uploadImage(
+            data: fallbackData,
+            fileName: "aichat-fallback-\(UUID().uuidString).jpg",
+            mimeType: "image/jpeg",
+            bearerToken: bearerToken
+        )
+        guard let imageURL = response.imageURL?.absoluteString, !imageURL.isEmpty else {
+            throw APIError.missingData
+        }
+        userDefaults.set(imageURL, forKey: aiChatFallbackImageURLCacheKey)
+        print("[AIChat] uploaded fallback image, imageURL=\(imageURL)")
+        return imageURL
     }
 
     private static func prepareImageUploadData(_ image: UIImage) async throws -> Data {
@@ -1274,6 +1734,29 @@ private enum FeatureAPIBridge {
             }
             return (data, fileName, mimeType)
         }.value
+    }
+
+    private static func prepareAIChatFallbackImageData() async throws -> Data {
+        try await Task.detached(priority: .userInitiated) {
+            let targetSize = CGSize(width: 768, height: 768)
+            let renderer = UIGraphicsImageRenderer(size: targetSize)
+            let image = renderer.image { context in
+                UIColor(white: 0.09, alpha: 1).setFill()
+                context.fill(CGRect(origin: .zero, size: targetSize))
+            }
+
+            guard let data = image.jpegData(compressionQuality: 0.88) else {
+                throw APIError.missingData
+            }
+            return data
+        }.value
+    }
+
+    static func localVideoDurationSeconds(from url: URL) -> Double? {
+        let asset = AVURLAsset(url: url)
+        let duration = CMTimeGetSeconds(asset.duration)
+        guard duration.isFinite, duration > 0 else { return nil }
+        return duration
     }
 
     static func loadPreviewImage(from url: URL) async throws -> UIImage? {
@@ -1382,8 +1865,15 @@ private extension UIImage {
     }
 }
 
+private enum FeatureMediaPickerMode {
+    case imageOnly
+    case videoOnly
+    case imageOrVideo
+}
+
 private struct FeatureMediaPicker: UIViewControllerRepresentable {
     let sourceType: UIImagePickerController.SourceType
+    let mode: FeatureMediaPickerMode
     let onMediaPicked: (FeaturePickedMedia) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -1396,8 +1886,22 @@ private struct FeatureMediaPicker: UIViewControllerRepresentable {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
         picker.sourceType = sourceType
-        picker.mediaTypes = ["public.image", "public.movie"]
-        picker.videoQuality = .typeHigh
+        switch mode {
+        case .imageOnly:
+            picker.mediaTypes = ["public.image"]
+            if sourceType == .camera {
+                picker.cameraCaptureMode = .photo
+            }
+        case .videoOnly:
+            picker.mediaTypes = ["public.movie"]
+            if sourceType == .camera {
+                picker.cameraCaptureMode = .video
+            }
+            picker.videoQuality = .typeHigh
+        case .imageOrVideo:
+            picker.mediaTypes = ["public.image", "public.movie"]
+            picker.videoQuality = .typeHigh
+        }
         picker.modalPresentationStyle = .fullScreen
         return picker
     }
@@ -1475,7 +1979,7 @@ private struct FeatureUploadSourceSheet: View {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(CalmTheme.elevated)
+                    .fill(GlamProTheme.elevated)
             )
             .padding(.horizontal, 10)
             .padding(.bottom, 10)

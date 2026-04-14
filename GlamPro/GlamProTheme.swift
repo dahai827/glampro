@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum CalmTheme {
+enum GlamProTheme {
     static let background = Color(hex: "111111")
     static let elevated = Color(hex: "1B1B1D")
     static let surface = Color(hex: "262628")

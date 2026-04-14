@@ -79,7 +79,6 @@ struct DebugLaunchConfig {
         case "all": return .all
         case "new": return .new
         case "shots": return .shots
-        case "motionswap", "motion-swap", "motion_swap": return .motionSwap
         default: return nil
         }
     }
@@ -96,7 +95,6 @@ enum HomeSection {
     case all
     case new
     case shots
-    case motionSwap
 }
 
 enum AppRoute: String, Identifiable {
@@ -127,18 +125,23 @@ final class AppState: ObservableObject {
     @Published var showSplash = true
     @Published var showFeaturesSheet = false
     @Published var isHomeBannerDismissed = false
+    @Published var shouldShowFeedBadge = false
 
-    private let rewardSeenDefaultsKey = "calm.lastRewardSeenDate"
-    private let legacyRewardDefaultsKey = "calm.lastRewardClaimDate"
     private var hasStarted = false
-    private var didPresentRewardThisLaunch = false
+    private var didDismissRewardThisLaunch = false
+    private var isDailyRewardEligible = false
+    private var currentRewardDateKey: String?
     private let debugLaunchConfig = DebugLaunchConfig.current
     private var routeStack: [AppRoute] = []
     private var didPresentLaunchSubscriptionPaywall = false
+    private let rewardClaimedDateDefaultsKey = "glampro.dailyCheckin.claimedDate"
+    private let feedBadgeDismissedDateDefaultsKey = "glampro.feed.badge.dismissedDate"
+    private let userDefaults = UserDefaults.standard
 
     func startIfNeeded() {
         guard !hasStarted else { return }
         hasStarted = true
+        refreshFeedBadgeVisibilityForToday()
 
         if let tab = debugLaunchConfig.tab {
             if tab == .features {
@@ -185,7 +188,14 @@ final class AppState: ObservableObject {
 
         withAnimation(.easeInOut(duration: 0.22)) {
             selectedTab = tab
+            if tab == .home {
+                selectedHomeSection = .all
+            }
             showFeaturesSheet = false
+        }
+
+        if tab == .feed {
+            dismissFeedBadgeForToday()
         }
 
         if tab == .home {
@@ -255,6 +265,10 @@ final class AppState: ObservableObject {
         withAnimation(.easeInOut(duration: 0.25)) {
             activeRoute = routeStack.popLast()
         }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.28) {
+            self.presentDailyRewardIfNeeded()
+        }
     }
 
     func presentLaunchSubscriptionPaywallIfNeeded() {
@@ -275,13 +289,19 @@ final class AppState: ObservableObject {
         }
     }
 
-    func claimReward() {
+    func claimReward(claimedDateKey: String?) {
+        isDailyRewardEligible = false
+        didDismissRewardThisLaunch = true
+        if let claimedDateKey, !claimedDateKey.isEmpty {
+            userDefaults.set(claimedDateKey, forKey: rewardClaimedDateDefaultsKey)
+        }
         withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
             showRewardPopup = false
         }
     }
 
     func dismissReward() {
+        didDismissRewardThisLaunch = true
         withAnimation(.easeInOut(duration: 0.2)) {
             showRewardPopup = false
         }
@@ -294,20 +314,52 @@ final class AppState: ObservableObject {
     }
 
     var shouldShowHomeBanner: Bool {
-        selectedTab == .home && !showSplash && activeRoute == nil && !showRewardPopup && !showFeaturesSheet && !isHomeBannerDismissed
+        false
+    }
+
+    func updateDailyRewardEligibility(_ eligible: Bool, rewardDateKey: String?) {
+        currentRewardDateKey = rewardDateKey
+        isDailyRewardEligible = eligible && !isClaimedForCurrentRewardDate
+        if !eligible {
+            showRewardPopup = false
+            return
+        }
+        presentDailyRewardIfNeeded()
     }
 
     private func presentDailyRewardIfNeeded() {
         guard selectedTab == .home, activeRoute == nil, !showSplash, !showFeaturesSheet else { return }
-        guard !didPresentRewardThisLaunch else { return }
-        didPresentRewardThisLaunch = true
+        guard isDailyRewardEligible else { return }
+        guard !didDismissRewardThisLaunch else { return }
+        guard !isClaimedForCurrentRewardDate else { return }
         withAnimation(.spring(response: 0.36, dampingFraction: 0.88)) {
             showRewardPopup = true
         }
     }
 
-    private var todayKey: String {
+    private var isClaimedForCurrentRewardDate: Bool {
+        guard let currentRewardDateKey, !currentRewardDateKey.isEmpty else { return false }
+        let claimedDate = userDefaults.string(forKey: rewardClaimedDateDefaultsKey)
+        return claimedDate == currentRewardDateKey
+    }
+
+    private func refreshFeedBadgeVisibilityForToday() {
+        let todayKey = currentLocalDateKey()
+        let dismissedDate = userDefaults.string(forKey: feedBadgeDismissedDateDefaultsKey)
+        shouldShowFeedBadge = dismissedDate != todayKey
+    }
+
+    private func dismissFeedBadgeForToday() {
+        let todayKey = currentLocalDateKey()
+        userDefaults.set(todayKey, forKey: feedBadgeDismissedDateDefaultsKey)
+        shouldShowFeedBadge = false
+    }
+
+    private func currentLocalDateKey() -> String {
         let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: Date())
     }

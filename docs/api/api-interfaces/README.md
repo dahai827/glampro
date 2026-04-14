@@ -8,6 +8,9 @@
 
 | 版本号 | 更新时间 | 更新内容 |
 |--------|----------|----------|
+| v2.30 | 2026-04-14 | 📝 新增视频上传文档：`/upload-video`（返回 `video_url`、`video_duration_seconds`）；补充 `image_to_dongzuo_video` 完整调用链：先传图、再传视频（建议 App 先压缩至 480p）、再创建任务并轮询 |
+| v2.29 | 2026-04-14 | 🆕 新增每日签到接口：`/daily-checkin-status`（查询签到面板状态）和 `/daily-checkin-sign`（执行签到发放积分），支持 7 天循环、断签重置、按 app 配置每日积分 |
+| v2.28 | 2026-04-14 | 🆕 新增动作模仿图生视频接口：`/image-to-dongzuo-video`，对接火山引擎 DreamActor M2.0，返回异步任务并通过 `/get-task` 轮询 |
 | v2.27 | 2026-03-19 | 🆕 新增 PayPal 支付接口：`/paypal-create-subscription`、`/paypal-activate-subscription` 订阅流程；`/paypal-create-order`、`/paypal-capture-order` 金币包流程；`subscription-products`、`iap-coin-packages` 支持 platform=paypal |
 | v2.26 | 2026-03-05 | 🆕 新增订阅产品列表接口文档：`/subscription-products` 获取 Stripe/Apple/Google 订阅配置，支持按 app_id、platform 筛选 |
 | v2.25 | 2026-03-03 | 📝 `create-payment-token` 新增：直接返回 `payment_url`，支持请求体 `app_id`、`source`、`return_scheme`，便于灵活扩展 |
@@ -61,6 +64,7 @@
 | 接口 | 路径 | 方法 | 需要 Token | 文档 |
 |------|------|------|-----------|------|
 | 上传图片 | `/upload-image` | POST | ✅ | [查看文档](./03-upload-image.md) |
+| 上传视频 | `/upload-video` | POST | ✅ | [查看文档](./12-upload-video.md) |
 | 查询任务 | `/get-task` | GET | ✅ | [查看文档](./04-get-task.md) |
 | 任务列表 | `/list-tasks` | GET | ✅ | [查看文档](./05-list-tasks.md) |
 
@@ -114,6 +118,7 @@
 | 图生图 | `/image-to-image` | POST | ✅ | [查看文档](./24-image-to-image.md) |
 | 文生视频 | `/text-to-video` | POST | ✅ | [查看文档](./25-text-to-video.md) |
 | 图生视频 | `/image-to-video` | POST | ✅ | [查看文档](./26-image-to-video.md) |
+| 动作模仿图生视频 | `/image-to-dongzuo-video` | POST | ✅ | [查看文档](./38-image-to-dongzuo-video.md) |
 | 视频换脸 | `/video-face-swap` | POST | ✅ | [查看文档](./27-video-face-swap.md) |
 | 图片理解 | `/image-understanding` | POST | ✅ | [查看文档](./28-image-understanding.md) |
 
@@ -136,6 +141,13 @@
 |------|------|------|-----------|------|
 | 提交用户反馈 | `/submit-feedback` | POST | ❌ | [查看文档](./14-submit-feedback.md) |
 | 上报活动事件 | `/report-activity-event` | POST | ✅ | [查看文档](./15-report-activity-event.md) |
+
+### 🎁 每日签到接口
+
+| 接口 | 路径 | 方法 | 需要 Token | 文档 |
+|------|------|------|-----------|------|
+| 每日签到状态 | `/daily-checkin-status` | GET | ✅ | [查看文档](./39-daily-checkin-status.md) |
+| 每日签到执行 | `/daily-checkin-sign` | POST | ✅ | [查看文档](./40-daily-checkin-sign.md) |
 
 ### 📖 开发指南
 
@@ -173,6 +185,14 @@
 3. UI 响应式显示 → 使用 SessionManager.creditsBalance
 ```
 👉 **详细流程说明**: [用户认证与状态管理流程文档](./16-user-auth-subscription-flow.md)
+
+#### 每日签到流程 ⭐
+```
+1. App 启动/进入首页 → 调用 [每日签到状态接口](./39-daily-checkin-status.md)
+2. 若 signed_today = false → 展示可领取按钮和 claimable_credits
+3. 用户点击领取 → 调用 [每日签到执行接口](./40-daily-checkin-sign.md)
+4. 更新 UI 积分余额与签到天数（day_no / next_claimable_day）
+```
 
 #### 创建任务流程
 ```
@@ -226,13 +246,28 @@
    - image_to_image → [图生图接口](./24-image-to-image.md)
    - text_to_video → [文生视频接口](./25-text-to-video.md)
    - image_to_video → [图生视频接口](./26-image-to-video.md)
+   - image_to_dongzuo_video（动作模仿）→ [动作模仿图生视频接口](./38-image-to-dongzuo-video.md)
    - video_face_swap → [视频换脸接口](./27-video-face-swap.md)
    - image_understanding → [图片理解接口](./28-image-understanding.md)
-3. 上传图片（如需要）→ [上传图片接口](./03-upload-image.md)
+3. 上传素材（按模型要求）：
+   - 图片素材 → [上传图片接口](./03-upload-image.md)
+   - 视频素材（如动作模仿）→ [上传视频接口](./12-upload-video.md)
 4. 调用生成接口 → 同步返回图片URL/分析结果 或 异步返回任务ID
 5. 轮询结果（视频接口）→ [查询任务接口](./04-get-task.md)
 ```
 👉 **详细使用指南**: [图片和视频生成接口指南](./NEW_AI_INTERFACES_GUIDE.md)
+
+#### 动作模仿图生视频（image_to_dongzuo_video）完整调用链 ⭐
+```
+1. 上传图片 → [上传图片接口](./03-upload-image.md)
+   - App 侧先等比缩放（宽高建议不超过 1024）并压缩体积
+2. 上传驱动视频 → [上传视频接口](./12-upload-video.md)
+   - App 侧先将视频压缩/转码为 480p 再上传
+   - 建议在 App 提示用户：视频时长不要超过 30 秒
+   - 上传接口返回 video_url、video_duration_seconds
+3. 创建动作模仿任务 → [动作模仿图生视频接口](./38-image-to-dongzuo-video.md)
+4. 轮询任务状态 → [查询任务接口](./04-get-task.md)
+```
 
 #### 金币包购买流程 ⭐
 ```
@@ -279,7 +314,7 @@
 - `09-{接口名}.md` - 配置相关接口
 - `10-{接口名}.md` - 配置相关接口
 - `11-{接口名}.md` - 配置相关接口
-- `12-{接口名}.md` - 配置相关接口
+- `12-{接口名}.md` - 任务相关接口（上传视频）
 - `13-{接口名}.md` - 配置相关接口
 - `14-{接口名}.md` - 其他接口
 - `15-{接口名}.md` - 其他接口
@@ -300,6 +335,9 @@
 - `35-{接口名}.md` - PayPal 订阅激活
 - `36-{接口名}.md` - PayPal 订单创建（金币包）
 - `37-{接口名}.md` - PayPal 订单捕获（金币包）
+- `38-{接口名}.md` - AI 生成相关接口（动作模仿图生视频）
+- `39-{接口名}.md` - 每日签到相关接口（状态查询）
+- `40-{接口名}.md` - 每日签到相关接口（执行签到）
 
 ---
 
@@ -340,4 +378,4 @@
 
 ---
 
-**最后更新**：2026-03-19
+**最后更新**：2026-04-14

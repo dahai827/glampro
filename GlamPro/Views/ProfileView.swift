@@ -16,14 +16,16 @@ struct ProfileView: View {
     @State private var selectedSegment: ProfileSegment = DebugLaunchConfig.current.profileSegment ?? .posts
     @State private var selectedTaskForDetail: UserTask?
 
+    private var visibleSegments: [ProfileSegment] {
+        ProfileSegment.allCases.filter { $0 != .drafts }
+    }
+
     var body: some View {
         ScreenContainer(showBrand: false, topSpacing: 18, bottomSpacing: 26) {
-            CalmTheme.background
+            GlamProTheme.background
         } content: {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
-                    topBar
-                    promoCard
                     profileHeader
                     segmentedTabs
                     segmentContent
@@ -40,7 +42,9 @@ struct ProfileView: View {
             }
             .onAppear {
                 if let segment = DebugLaunchConfig.current.profileSegment {
-                    selectedSegment = segment
+                    selectedSegment = segment == .drafts ? .posts : segment
+                } else if selectedSegment == .drafts {
+                    selectedSegment = .posts
                 }
             }
             .fullScreenCover(item: $selectedTaskForDetail, onDismiss: {
@@ -129,43 +133,13 @@ struct ProfileView: View {
                     }
                 }
             }
-
-            HStack(spacing: 12) {
-                Button(action: {}) {
-                    HStack(spacing: 8) {
-                        Text("AI Profiles")
-                            .font(.calm(16, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("New")
-                            .font(.calm(11, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Capsule().fill(CalmTheme.pink))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 42)
-                    .background(Capsule().fill(Color.white.opacity(0.09)))
-                }
-                .buttonStyle(.plain)
-
-                Button(action: {}) {
-                    Text("Edit Profile")
-                        .font(.calm(16, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 42)
-                        .background(Capsule().fill(Color.white.opacity(0.09)))
-                }
-                .buttonStyle(.plain)
-            }
         }
     }
 
     private var segmentedTabs: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 30) {
-                ForEach(ProfileSegment.allCases) { segment in
+            HStack(spacing: 0) {
+                ForEach(visibleSegments) { segment in
                     Button {
                         selectedSegment = segment
                     } label: {
@@ -177,6 +151,7 @@ struct ProfileView: View {
                                 .fill(selectedSegment == segment ? Color.white : Color.clear)
                                 .frame(height: 2)
                         }
+                        .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)
                 }
@@ -193,7 +168,7 @@ struct ProfileView: View {
     private var segmentContent: some View {
         switch selectedSegment {
         case .drafts:
-            ProfileDraftsEmptyState(onTapCreate: navigateToHome)
+            historySection
 
         case .posts:
             historySection
@@ -300,7 +275,7 @@ struct ProfileView: View {
                             .tint(.white)
                         Text("Loading more...")
                             .font(.calm(14, weight: .medium))
-                            .foregroundColor(CalmTheme.secondaryText)
+                            .foregroundColor(GlamProTheme.secondaryText)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -323,7 +298,7 @@ struct ProfileView: View {
                 .foregroundColor(.white)
             Text(title)
                 .font(.calm(12, weight: .medium))
-                .foregroundColor(CalmTheme.secondaryText)
+                .foregroundColor(GlamProTheme.secondaryText)
         }
     }
 
@@ -360,7 +335,7 @@ private struct ProfileDraftsEmptyState: View {
                     .font(.calm(17, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 166, height: 44)
-                    .background(Capsule().fill(CalmTheme.accentGradient))
+                    .background(Capsule().fill(GlamProTheme.accentGradient))
             }
             .buttonStyle(.plain)
         }
@@ -442,13 +417,17 @@ private struct ProfileGridArtwork: View {
         ClippedArtworkContainer(cornerRadius: cornerRadius) {
             Group {
                 if let url {
-                    RemoteArtworkView(
-                        url: url,
-                        paletteIndex: paletteIndex,
-                        cornerRadius: cornerRadius,
-                        symbol: symbol,
-                        contentMode: .fill
-                    )
+                    if isVideo {
+                        ProfileVideoFirstFrameArtwork(url: url, paletteIndex: paletteIndex, cornerRadius: cornerRadius, symbol: symbol)
+                    } else {
+                        RemoteArtworkView(
+                            url: url,
+                            paletteIndex: paletteIndex,
+                            cornerRadius: cornerRadius,
+                            symbol: symbol,
+                            contentMode: .fill
+                        )
+                    }
                 } else {
                     PlaceholderArtwork(paletteIndex: paletteIndex, cornerRadius: cornerRadius, symbol: symbol)
                 }
@@ -467,6 +446,46 @@ private struct ProfileGridArtwork: View {
                     .padding(8)
             }
         }
+    }
+}
+
+private struct ProfileVideoFirstFrameArtwork: View {
+    let url: URL
+    let paletteIndex: Int
+    let cornerRadius: CGFloat
+    let symbol: String?
+
+    @State private var firstFrameImage: UIImage?
+
+    var body: some View {
+        Group {
+            if let firstFrameImage {
+                Image(uiImage: firstFrameImage)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                PlaceholderArtwork(paletteIndex: paletteIndex, cornerRadius: cornerRadius, symbol: symbol)
+            }
+        }
+        .task(id: url) {
+            firstFrameImage = await ProfileVideoFrameExtractor.firstFrameImage(from: url)
+        }
+    }
+}
+
+private enum ProfileVideoFrameExtractor {
+    static func firstFrameImage(from url: URL) async -> UIImage? {
+        await Task.detached(priority: .userInitiated) {
+            let asset = AVURLAsset(url: url)
+            let generator = AVAssetImageGenerator(asset: asset)
+            generator.appliesPreferredTrackTransform = true
+            generator.maximumSize = CGSize(width: 720, height: 720)
+            let time = CMTime(seconds: 0.1, preferredTimescale: 600)
+            guard let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) else {
+                return nil
+            }
+            return UIImage(cgImage: cgImage)
+        }.value
     }
 }
 
@@ -492,7 +511,7 @@ private struct ProfileHistoryGridCard: View {
     var body: some View {
         Button(action: onOpen) {
             ProfileGridArtwork(
-                url: task.isVideoAsset ? nil : task.outputURL,
+                url: task.canUseVideoFirstFrameInCard ? task.outputURL : (task.isVideoAsset ? nil : task.outputURL),
                 paletteIndex: task.paletteIndex,
                 isVideo: task.isVideoAsset,
                 symbol: task.isVideoAsset ? "play.fill" : task.placeholderSymbol
@@ -584,7 +603,7 @@ private struct ProfileSavedEmptyState: View {
                     .font(.calm(17, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 158, height: 42)
-                    .background(Capsule().fill(CalmTheme.accentGradient))
+                    .background(Capsule().fill(GlamProTheme.accentGradient))
             }
             .buttonStyle(.plain)
         }
@@ -725,16 +744,16 @@ private struct ProfileTaskRow: View {
 
                 Text(task.createdAtDisplayText)
                     .font(.calm(13, weight: .medium))
-                    .foregroundColor(CalmTheme.secondaryText)
+                    .foregroundColor(GlamProTheme.secondaryText)
                     .lineLimit(1)
 
                 HStack(spacing: 8) {
                     if let creditsText = task.creditsUsedDisplayText {
-                        ProfileTaskMetaChip(icon: "bolt.fill", title: creditsText, tint: CalmTheme.yellow)
+                        ProfileTaskMetaChip(icon: "bolt.fill", title: creditsText, tint: GlamProTheme.yellow)
                     }
 
                     if let menuText = task.sectionMenuDisplayText {
-                        ProfileTaskMetaChip(icon: "square.grid.2x2.fill", title: menuText, tint: CalmTheme.blue)
+                        ProfileTaskMetaChip(icon: "square.grid.2x2.fill", title: menuText, tint: GlamProTheme.blue)
                     }
                 }
 
@@ -767,15 +786,12 @@ private struct ProfileTaskThumbnail: View {
         ZStack(alignment: .bottomTrailing) {
             Group {
                 if let outputURL = task.outputURL, !task.isVideoAsset {
-                    AsyncImage(url: outputURL) { phase in
-                        switch phase {
-                        case let .success(image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        default:
-                            PlaceholderArtwork(paletteIndex: task.paletteIndex, cornerRadius: 18, symbol: task.placeholderSymbol)
-                        }
+                    GlamCachedAsyncImage(url: outputURL) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        PlaceholderArtwork(paletteIndex: task.paletteIndex, cornerRadius: 18, symbol: task.placeholderSymbol)
                     }
                 } else {
                     PlaceholderArtwork(paletteIndex: task.paletteIndex, cornerRadius: 18, symbol: task.placeholderSymbol)
@@ -888,7 +904,7 @@ private struct ProfileHistoryMessageCard: View {
 
             Text(message)
                 .font(.calm(15, weight: .medium))
-                .foregroundColor(CalmTheme.secondaryText)
+                .foregroundColor(GlamProTheme.secondaryText)
                 .multilineTextAlignment(.center)
 
             if let actionTitle, let action {
@@ -898,7 +914,7 @@ private struct ProfileHistoryMessageCard: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 22)
                         .frame(height: 42)
-                        .background(Capsule().fill(CalmTheme.accentGradient))
+                        .background(Capsule().fill(GlamProTheme.accentGradient))
                 }
                 .buttonStyle(.plain)
             }
@@ -924,10 +940,10 @@ private struct ProfileHistoryInlineError: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(CalmTheme.orange)
+                .foregroundColor(GlamProTheme.orange)
             Text(message)
                 .font(.calm(13, weight: .medium))
-                .foregroundColor(CalmTheme.secondaryText)
+                .foregroundColor(GlamProTheme.secondaryText)
                 .lineLimit(2)
             Spacer(minLength: 0)
             Button("Retry", action: retry)
@@ -1050,30 +1066,24 @@ private struct ProfileTaskPreviewView: View {
                     }
             } else {
                 ZStack {
-                    AsyncImage(url: mediaURL) { phase in
-                        switch phase {
-                        case let .success(image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .blur(radius: 24)
-                                .overlay(Color.black.opacity(0.18))
-                        default:
-                            PlaceholderArtwork(paletteIndex: task.paletteIndex, cornerRadius: 0)
-                        }
+                    GlamCachedAsyncImage(url: mediaURL) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .blur(radius: 24)
+                            .overlay(Color.black.opacity(0.18))
+                    } placeholder: {
+                        PlaceholderArtwork(paletteIndex: task.paletteIndex, cornerRadius: 0)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
 
-                    AsyncImage(url: mediaURL) { phase in
-                        switch phase {
-                        case let .success(image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        default:
-                            PlaceholderArtwork(paletteIndex: task.paletteIndex, cornerRadius: 0)
-                        }
+                    GlamCachedAsyncImage(url: mediaURL) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        PlaceholderArtwork(paletteIndex: task.paletteIndex, cornerRadius: 0)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
@@ -1083,7 +1093,7 @@ private struct ProfileTaskPreviewView: View {
             VStack(spacing: 14) {
                 Image(systemName: "xmark.octagon.fill")
                     .font(.system(size: 34, weight: .bold))
-                    .foregroundColor(CalmTheme.orange)
+                    .foregroundColor(GlamProTheme.orange)
 
                 Text(viewModel.statusDetailText)
                     .font(.calm(22, weight: .bold))
@@ -1091,7 +1101,7 @@ private struct ProfileTaskPreviewView: View {
 
                 Text(errorMessage)
                     .font(.calm(15, weight: .medium))
-                    .foregroundColor(CalmTheme.secondaryText)
+                    .foregroundColor(GlamProTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 26)
             }
@@ -1143,7 +1153,7 @@ private struct ProfileTaskPreviewView: View {
 
                     Text(viewModel.statusDetailText)
                         .font(.calm(14, weight: .medium))
-                        .foregroundColor(CalmTheme.secondaryText)
+                        .foregroundColor(GlamProTheme.secondaryText)
                         .lineLimit(1)
                         .truncationMode(.tail)
                 }
@@ -1168,7 +1178,7 @@ private struct ProfileTaskPreviewView: View {
                 .frame(height: 54)
                 .background(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(viewModel.mediaURL == nil ? AnyShapeStyle(Color.white.opacity(0.08)) : AnyShapeStyle(CalmTheme.accentGradient))
+                        .fill(viewModel.mediaURL == nil ? AnyShapeStyle(Color.white.opacity(0.08)) : AnyShapeStyle(GlamProTheme.accentGradient))
                 )
             }
             .buttonStyle(.plain)
@@ -1203,7 +1213,7 @@ private struct ProfileTaskPreviewView: View {
             guard ProfileMediaSaver.isPhotoLibraryAccessGranted(status) else {
                 saveFeedback = SaveFeedback(
                     title: "Photos Access Needed",
-                    message: "Please allow photo access so Calm can save generated content to your Photos.",
+                    message: "Please allow photo access so Glam Pro can save generated content to your Photos.",
                     opensSettings: status == .denied || status == .restricted
                 )
                 return
@@ -1434,6 +1444,7 @@ private final class ProfileVideoEngine: ObservableObject {
 
     private var looper: AVPlayerLooper?
     private var currentURL: URL?
+    private var loadTask: Task<Void, Never>?
 
     init() {
         player.isMuted = true
@@ -1445,8 +1456,14 @@ private final class ProfileVideoEngine: ObservableObject {
         currentURL = url
         player.pause()
         player.removeAllItems()
-        let item = AVPlayerItem(url: url)
-        looper = AVPlayerLooper(player: player, templateItem: item)
+        loadTask?.cancel()
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            let playableURL = await GlamVideoCacheManager.shared.cachedURL(for: url)
+            guard !Task.isCancelled, self.currentURL == url else { return }
+            let item = AVPlayerItem(url: playableURL)
+            self.looper = AVPlayerLooper(player: self.player, templateItem: item)
+        }
     }
 
     func play() {
@@ -1510,13 +1527,13 @@ private extension UserTask {
     var statusColor: Color {
         switch normalizedStatus {
         case "completed", "done", "success":
-            return CalmTheme.blue
+            return GlamProTheme.blue
         case "failed", "error":
-            return CalmTheme.orange
+            return GlamProTheme.orange
         case "queued", "pending":
-            return CalmTheme.indigo
+            return GlamProTheme.indigo
         default:
-            return CalmTheme.purple
+            return GlamProTheme.purple
         }
     }
 
@@ -1553,6 +1570,14 @@ private extension UserTask {
             return true
         }
         return ["image_to_video", "text_to_video", "video_face_swap"].contains(scene?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? "")
+    }
+
+    var isSuccessStatus: Bool {
+        ["completed", "done", "success"].contains(normalizedStatus)
+    }
+
+    var canUseVideoFirstFrameInCard: Bool {
+        isVideoAsset && isSuccessStatus && outputURL != nil
     }
 
     var placeholderSymbol: String {

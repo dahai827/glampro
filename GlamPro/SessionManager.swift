@@ -86,6 +86,7 @@ final class SessionManager: ObservableObject {
         userID = response.user.id
         userDefaults.set(response.user.id, forKey: userIDKey)
         saveSession(accessToken: response.session.accessToken, refreshToken: response.session.refreshToken)
+        FacebookAnalyticsService.shared.logCompleteRegistrationOnce(userID: response.user.id)
         try await fetchUserStatus(using: response.session.accessToken)
         lastErrorMessage = nil
     }
@@ -204,6 +205,7 @@ final class SessionManager: ObservableObject {
 
         userID = response.user.id
         userDefaults.set(response.user.id, forKey: userIDKey)
+        FacebookAnalyticsService.shared.logCompleteRegistrationOnce(userID: response.user.id)
 
         guard let session = response.session else {
             throw APIError.missingData

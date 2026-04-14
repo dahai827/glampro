@@ -139,6 +139,34 @@ final class APIClient {
         return try await execute(request)
     }
 
+    func uploadVideo(
+        data: Data,
+        fileName: String,
+        mimeType: String = "video/mp4",
+        bearerToken: String,
+        timeoutInterval: TimeInterval? = 180
+    ) async throws -> UploadVideoResponse {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        let url = try buildURL(path: "upload-video")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        if let timeoutInterval {
+            request.timeoutInterval = timeoutInterval
+        }
+        applyDefaultHeaders(
+            to: &request,
+            bearerToken: bearerToken,
+            contentType: "multipart/form-data; boundary=\(boundary)"
+        )
+        request.httpBody = createMultipartBody(
+            boundary: boundary,
+            fileData: data,
+            fileName: fileName,
+            mimeType: mimeType
+        )
+        return try await execute(request)
+    }
+
     func postSupabaseAuth<T: Decodable, Body: Encodable>(body: Body) async throws -> T {
         var components = URLComponents(url: APIConfig.supabaseURL.appendingPathComponent("auth/v1/token"), resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "grant_type", value: "refresh_token")]
@@ -251,7 +279,7 @@ final class APIClient {
 
     private func mapTransportError(_ error: URLError, for request: URLRequest) -> APIError {
         let path = request.url?.lastPathComponent ?? "request"
-        let isTaskCreationRequest = request.httpMethod == "POST" && ["image-to-image", "image-to-video", "text-to-image", "text-to-video", "video-face-swap"].contains(path)
+        let isTaskCreationRequest = request.httpMethod == "POST" && ["image-to-image", "image-to-video", "image-to-dongzuo-video", "text-to-image", "text-to-video", "video-face-swap"].contains(path)
 
         switch error.code {
         case .networkConnectionLost:
@@ -287,7 +315,18 @@ final class APIClient {
                 return errorMessage
             }
         }
-        return String(data: data, encoding: .utf8) ?? ""
+        let raw = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !raw.isEmpty else { return "" }
+
+        let lowered = raw.lowercased()
+        if lowered.contains("<html") || lowered.contains("<head>") || lowered.contains("<body>") {
+            return "Server error. Please try again."
+        }
+        if lowered.contains("internal server error") {
+            return "Server error. Please try again."
+        }
+
+        return raw
     }
 
     private func createMultipartBody(
