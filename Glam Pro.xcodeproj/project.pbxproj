@@ -277,14 +277,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_LANGUAGE = en;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7638GMP755;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Glam Pro";
+				INFOPLIST_KEY_CFBundleDisplayName = GlamPro;
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = fb1261567822843388;
 				INFOPLIST_KEY_FacebookAdvertiserIDCollectionEnabled = YES;
 				INFOPLIST_KEY_FacebookAppID = 1261567822843388;
@@ -310,7 +310,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.liuying.glampro;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = GlamProDev;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = GlamProPro;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -396,7 +396,7 @@
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7638GMP755;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Glam Pro";
+				INFOPLIST_KEY_CFBundleDisplayName = GlamPro;
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = fb1261567822843388;
 				INFOPLIST_KEY_FacebookAdvertiserIDCollectionEnabled = YES;
 				INFOPLIST_KEY_FacebookAppID = 1261567822843388;
