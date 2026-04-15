@@ -1,6 +1,6 @@
-name: "Glam Pro"
+name: "Glam AI Pro"
 options:
-  bundleIdPrefix: com.glampro
+  bundleIdPrefix: com.liuying
   deploymentTarget:
     iOS: "15.6"
   developmentLanguage: en
@@ -19,17 +19,19 @@ targets:
       - iOS
     sources:
       - path: GlamPro
+      - path: Banner Slider
+        type: folder
     dependencies:
       - package: FacebookSDK
         product: FacebookCore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.glampro.GlamPro
+        PRODUCT_BUNDLE_IDENTIFIER: com.liuying.glampro
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: "Glam Pro"
+        INFOPLIST_KEY_CFBundleDisplayName: "Glam AI Pro"
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

@@ -23,6 +23,9 @@ struct GlamProApp: App {
                 .environmentObject(savedTemplatesStore)
                 .environmentObject(likedTemplatesStore)
                 .preferredColorScheme(.dark)
+                .task {
+                    StoreKitTransactionObserver.shared.startIfNeeded(sessionManager: sessionManager)
+                }
         }
     }
 }

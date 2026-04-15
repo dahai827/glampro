@@ -26,6 +26,7 @@ struct ProfileView: View {
         } content: {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
+                    topBar
                     profileHeader
                     segmentedTabs
                     segmentContent
@@ -127,8 +128,8 @@ struct ProfileView: View {
                         .foregroundColor(.white)
 
                     HStack(spacing: 26) {
-                        statColumn(value: "0", title: "Following")
-                        statColumn(value: "0", title: "Followers")
+                        statColumn(value: "\(historyViewModel.tasks.count)", title: "History")
+                        statColumn(value: "\(savedTemplatesStore.items.count)", title: "Saved")
                         statColumn(value: "\(likedTemplatesStore.items.count)", title: "Likes")
                     }
                 }
@@ -228,6 +229,11 @@ struct ProfileView: View {
 
     private var historySection: some View {
         VStack(spacing: 12) {
+            Text("Task results are automatically deleted after 2 hours.")
+                .font(.calm(12, weight: .medium))
+                .foregroundColor(GlamProTheme.secondaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
             if historyViewModel.isLoading && historyViewModel.tasks.isEmpty {
                 LazyVGrid(columns: profileGridColumns, spacing: 14) {
                     ForEach(0..<6, id: \.self) { index in
@@ -401,33 +407,24 @@ private struct ProfileLikedEmptyState: View {
 private struct ProfileGridArtwork: View {
     private let cornerRadius: CGFloat = 16
 
-    let url: URL?
+    let imageURL: URL?
+    let videoURL: URL?
     let paletteIndex: Int
-    let isVideo: Bool
     let symbol: String?
-
-    init(url: URL?, paletteIndex: Int, isVideo: Bool = false, symbol: String? = nil) {
-        self.url = url
-        self.paletteIndex = paletteIndex
-        self.isVideo = isVideo
-        self.symbol = symbol
-    }
 
     var body: some View {
         ClippedArtworkContainer(cornerRadius: cornerRadius) {
             Group {
-                if let url {
-                    if isVideo {
-                        ProfileVideoFirstFrameArtwork(url: url, paletteIndex: paletteIndex, cornerRadius: cornerRadius, symbol: symbol)
-                    } else {
-                        RemoteArtworkView(
-                            url: url,
-                            paletteIndex: paletteIndex,
-                            cornerRadius: cornerRadius,
-                            symbol: symbol,
-                            contentMode: .fill
-                        )
-                    }
+                if let videoURL {
+                    ProfileGridLoopingVideoArtwork(videoURL: videoURL, fallbackImageURL: imageURL)
+                } else if let imageURL {
+                    RemoteArtworkView(
+                        url: imageURL,
+                        paletteIndex: paletteIndex,
+                        cornerRadius: cornerRadius,
+                        symbol: symbol,
+                        contentMode: .fill
+                    )
                 } else {
                     PlaceholderArtwork(paletteIndex: paletteIndex, cornerRadius: cornerRadius, symbol: symbol)
                 }
@@ -437,7 +434,7 @@ private struct ProfileGridArtwork: View {
         .aspectRatio(100.0 / 160.0, contentMode: .fit)
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay(alignment: .bottomTrailing) {
-            if isVideo {
+            if videoURL != nil {
                 Image(systemName: "play.fill")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
@@ -449,43 +446,26 @@ private struct ProfileGridArtwork: View {
     }
 }
 
-private struct ProfileVideoFirstFrameArtwork: View {
-    let url: URL
-    let paletteIndex: Int
-    let cornerRadius: CGFloat
-    let symbol: String?
-
-    @State private var firstFrameImage: UIImage?
+private struct ProfileGridLoopingVideoArtwork: View {
+    let videoURL: URL
+    let fallbackImageURL: URL?
 
     var body: some View {
-        Group {
-            if let firstFrameImage {
-                Image(uiImage: firstFrameImage)
-                    .resizable()
-                    .scaledToFill()
+        ZStack {
+            if let fallbackImageURL {
+                GlamCachedAsyncImage(url: fallbackImageURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Color.black
+                }
             } else {
-                PlaceholderArtwork(paletteIndex: paletteIndex, cornerRadius: cornerRadius, symbol: symbol)
+                Color.black
             }
-        }
-        .task(id: url) {
-            firstFrameImage = await ProfileVideoFrameExtractor.firstFrameImage(from: url)
-        }
-    }
-}
 
-private enum ProfileVideoFrameExtractor {
-    static func firstFrameImage(from url: URL) async -> UIImage? {
-        await Task.detached(priority: .userInitiated) {
-            let asset = AVURLAsset(url: url)
-            let generator = AVAssetImageGenerator(asset: asset)
-            generator.appliesPreferredTrackTransform = true
-            generator.maximumSize = CGSize(width: 720, height: 720)
-            let time = CMTime(seconds: 0.1, preferredTimescale: 600)
-            guard let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) else {
-                return nil
-            }
-            return UIImage(cgImage: cgImage)
-        }.value
+            ProfileLoopingVideoView(url: videoURL, isPaused: false)
+        }
     }
 }
 
@@ -511,9 +491,9 @@ private struct ProfileHistoryGridCard: View {
     var body: some View {
         Button(action: onOpen) {
             ProfileGridArtwork(
-                url: task.canUseVideoFirstFrameInCard ? task.outputURL : (task.isVideoAsset ? nil : task.outputURL),
+                imageURL: task.canUseVideoFirstFrameInCard ? task.outputURL : (task.isVideoAsset ? nil : task.outputURL),
+                videoURL: nil,
                 paletteIndex: task.paletteIndex,
-                isVideo: task.isVideoAsset,
                 symbol: task.isVideoAsset ? "play.fill" : task.placeholderSymbol
             )
         }
@@ -543,9 +523,10 @@ private struct ProfileLikedGridCard: View {
         ZStack(alignment: .topTrailing) {
             Button(action: onOpen) {
                 ProfileGridArtwork(
-                    url: item.effectiveCoverURL,
+                    imageURL: item.effectiveCoverURL,
+                    videoURL: item.coverVideoURL,
                     paletteIndex: item.paletteIndex,
-                    isVideo: item.coverVideoURL != nil
+                    symbol: nil
                 )
             }
             .buttonStyle(.plain)
@@ -565,9 +546,10 @@ private struct ProfileSavedGridCard: View {
         ZStack(alignment: .topTrailing) {
             Button(action: onOpen) {
                 ProfileGridArtwork(
-                    url: item.effectiveCoverURL,
+                    imageURL: item.effectiveCoverURL,
+                    videoURL: item.coverVideoURL,
                     paletteIndex: item.paletteIndex,
-                    isVideo: item.coverVideoURL != nil
+                    symbol: nil
                 )
             }
             .buttonStyle(.plain)
@@ -652,6 +634,7 @@ private final class ProfileHistoryViewModel: ObservableObject {
             errorMessage = nil
             didLoadOnce = true
         } catch {
+            if isCancellationError(error) { return }
             errorMessage = error.localizedDescription
         }
     }
@@ -690,6 +673,7 @@ private final class ProfileHistoryViewModel: ObservableObject {
             errorMessage = nil
             didLoadOnce = true
         } catch {
+            if isCancellationError(error) { return }
             errorMessage = error.localizedDescription
             if tasks.isEmpty {
                 total = 0
@@ -720,6 +704,17 @@ private final class ProfileHistoryViewModel: ObservableObject {
         }
 
         return merged
+    }
+
+    private func isCancellationError(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
+        if case let APIError.transportError(message) = error {
+            let normalized = message.lowercased()
+            return normalized.contains("cancelled") || normalized.contains("canceled")
+        }
+        let description = error.localizedDescription.lowercased()
+        return description.contains("cancelled") || description.contains("canceled")
     }
 }
 

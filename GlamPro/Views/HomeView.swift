@@ -36,6 +36,7 @@ struct HomeView: View {
     let selectedSection: HomeSection
     let selectSection: (HomeSection) -> Void
     let openCredits: () -> Void
+    let openSubscriptionPaywall: () -> Void
     let openProfile: () -> Void
     let openPreview: () -> Void
     let openCollection: (HomeCollectionPage) -> Void
@@ -262,28 +263,35 @@ struct HomeView: View {
 
             Spacer()
 
-            Button(action: openCredits) {
-                HStack(spacing: 7) {
-                    Image(systemName: "c.circle.fill")
-                        .font(.system(size: 17, weight: .black))
-                    Text("\(sessionManager.creditsBalance)")
-                        .font(.calm(17, weight: .bold))
-                    Rectangle()
-                        .fill(Color.black.opacity(0.28))
-                        .frame(width: 1, height: 15)
-                    Text(sessionManager.isPro ? "PRO" : "Upgrade")
+            HStack(spacing: 8) {
+                Button(action: openCredits) {
+                    HStack(spacing: 7) {
+                        Image(systemName: "c.circle.fill")
+                            .font(.system(size: 17, weight: .black))
+                        Text("\(sessionManager.creditsBalance)")
+                            .font(.calm(17, weight: .bold))
+                    }
+                    .foregroundColor(Color(hex: "F5C94F"))
+                    .padding(.horizontal, 14)
+                    .frame(height: 38)
+                    .background(Capsule().fill(GlamProTheme.goldGradient))
+                    .overlay(Capsule().stroke(Color.white.opacity(0.07), lineWidth: 0.8))
+                }
+                .buttonStyle(.plain)
+
+                Button(action: openSubscriptionPaywall) {
+                    Text("PRO")
                         .font(.calm(17, weight: .bold))
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
+                        .foregroundColor(Color(hex: "F5C94F"))
+                        .padding(.horizontal, 14)
+                        .frame(height: 38)
+                        .background(Capsule().fill(GlamProTheme.goldGradient))
+                        .overlay(Capsule().stroke(Color.white.opacity(0.07), lineWidth: 0.8))
                 }
-                .foregroundColor(Color(hex: "F5C94F"))
-                .padding(.horizontal, 15)
-                .frame(minWidth: sessionManager.isPro ? 118 : 146)
-                .frame(height: 38)
-                .background(Capsule().fill(GlamProTheme.goldGradient))
-                .overlay(Capsule().stroke(Color.white.opacity(0.07), lineWidth: 0.8))
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
             .layoutPriority(1)
 
             CircleIconButton(
@@ -549,29 +557,6 @@ struct HomeView: View {
                         endPoint: .bottom
                     )
                 }
-                .overlay(alignment: .topLeading) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 9, weight: .bold))
-                        Text("Video")
-                            .font(.calm(10, weight: .heavy))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .frame(height: 20)
-                    .background(Capsule().fill(Color.black.opacity(0.34)))
-                    .padding(12)
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(item.title)
-                        .font(.calm(22, weight: .heavy))
-                        .foregroundColor(.white)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                }
-                .padding(.horizontal, 18)
-                .padding(.bottom, 18)
             }
         }
         .buttonStyle(.plain)
@@ -580,19 +565,23 @@ struct HomeView: View {
     }
 
     private var localBannerItems: [HomeBannerItem] {
-        let folder = URL(fileURLWithPath: "/Users/yaxing/Desktop/MyApp/Glam Pro/Banner Slider", isDirectory: true)
-        let configs: [(id: String, title: String, fileName: String, destination: HomeBannerItem.Destination)] = [
-            ("local-banner-1", "AI Chat", "Banner Slider_1.mp4", .aiChat),
+        let configs: [(id: String, title: String, resourceName: String, ext: String, destination: HomeBannerItem.Destination)] = [
+            ("local-banner-1", "AI Chat", "Banner Slider_1", "mp4", .aiChat),
             // Banner 2 temporarily hidden until new video is provided.
-            ("local-banner-3", "Motion Swap", "Banner Slider_3.mp4", .motionSwap)
+            ("local-banner-3", "Motion Swap", "Banner Slider_3", "mp4", .motionSwap)
         ]
 
         return configs.compactMap { config in
-            let fileURL = folder.appendingPathComponent(config.fileName)
-            guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            let bundledURL =
+                Bundle.main.url(forResource: config.resourceName, withExtension: config.ext, subdirectory: "Banner Slider")
+                ?? Bundle.main.url(forResource: config.resourceName, withExtension: config.ext)
+
+            guard let bundledURL else {
+                print("[HomeView] missing bundled banner video: \(config.resourceName).\(config.ext)")
                 return nil
             }
-            return HomeBannerItem(id: config.id, title: config.title, videoURL: fileURL, destination: config.destination)
+
+            return HomeBannerItem(id: config.id, title: config.title, videoURL: bundledURL, destination: config.destination)
         }
     }
 
