@@ -143,6 +143,7 @@ struct RootView: View {
                         appState.open(.subscriptionTwo)
                     }
                 },
+                openSubscriptionPaywall: { appState.open(.subscriptionTwo) },
                 openProfile: { appState.open(.profile) },
                 openPreview: { appState.open(.templatePreview) },
                 openCollection: openHomeCollection,
@@ -534,7 +535,7 @@ private struct DailyRewardPopup: View {
             HStack(spacing: 6) {
                 Image(systemName: "flame.fill")
                     .font(.system(size: 12, weight: .bold))
-                Text("\(max(status?.currentStreakDay ?? 0, 0))-Day Streak")
+                Text(streakText)
                     .font(.calm(12, weight: .bold))
             }
             .foregroundColor(.white)
@@ -702,6 +703,33 @@ private struct DailyRewardPopup: View {
             }
         }
         return 1
+    }
+
+    private var streakDisplayDay: Int {
+        let apiStreak = max(status?.currentStreakDay ?? 0, 0)
+
+        if let signedTodayDay = rewardDays.first(where: { $0.status.lowercased() == "signed_today" })?.day {
+            return max(signedTodayDay, apiStreak)
+        }
+
+        if let claimableDay = rewardDays.first(where: { $0.status.lowercased() == "claimable" })?.day {
+            return max(claimableDay - 1, apiStreak, 1)
+        }
+
+        let signedCount = rewardDays.filter {
+            let lower = $0.status.lowercased()
+            return lower == "signed" || lower == "signed_today"
+        }.count
+        if signedCount > 0 {
+            return max(signedCount, apiStreak)
+        }
+
+        return max(apiStreak, 1)
+    }
+
+    private var streakText: String {
+        let day = streakDisplayDay
+        return day == 1 ? "1-Day Streak" : "\(day)-Day Streak"
     }
 
     private var isClaimable: Bool {

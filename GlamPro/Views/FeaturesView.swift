@@ -102,7 +102,8 @@ struct FeaturesView: View {
                 title: section.displayTitle,
                 subtitle: section.displaySubtitle ?? "Explore this video section",
                 symbol: symbolCandidates[index],
-                paletteIndex: abs(section.id.hashValue) % 8
+                paletteIndex: abs(section.id.hashValue) % 8,
+                previewItem: section.items.first
             )
         }
     }
@@ -113,6 +114,9 @@ struct FeaturesView: View {
                 PlaceholderArtwork(paletteIndex: item.paletteIndex, cornerRadius: 14, symbol: item.symbol)
                     .frame(height: 124)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay {
+                        featureCardMedia(item)
+                    }
                     .overlay(alignment: .bottomLeading) {
                         Image(systemName: item.symbol)
                             .font(.system(size: 14, weight: .semibold))
@@ -140,12 +144,68 @@ struct FeaturesView: View {
         .buttonStyle(.plain)
     }
 
+    @ViewBuilder
+    private func featureCardMedia(_ item: FeatureCardModel) -> some View {
+        if let localVideoURL = localFeatureVideoURL(for: item) {
+            LocalLoopingVideoArtworkView(videoURL: localVideoURL, cornerRadius: 14)
+        } else if let localImage = localFeatureImage(for: item) {
+            Image(uiImage: localImage)
+                .resizable()
+                .scaledToFill()
+        }
+    }
+
+    private func localFeatureVideoURL(for item: FeatureCardModel) -> URL? {
+        let title = item.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        if title == "ai chat" {
+            return Bundle.main.url(forResource: "Banner Slider_1", withExtension: "mp4", subdirectory: "Banner Slider")
+                ?? Bundle.main.url(forResource: "Banner Slider_1", withExtension: "mp4")
+        }
+        if title == "custom styles" || title == "custom style" {
+            return Bundle.main.url(forResource: "features_custom_style", withExtension: "mp4")
+        }
+        if title == "motion swap" {
+            return Bundle.main.url(forResource: "features_motion_swap", withExtension: "mp4")
+        }
+        return nil
+    }
+
+    private func localFeatureImage(for item: FeatureCardModel) -> UIImage? {
+        let title = item.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard title == "shots",
+              let shotsURL = Bundle.main.url(forResource: "features_shots", withExtension: "jpg")
+        else {
+            return nil
+        }
+        return UIImage(contentsOfFile: shotsURL.path)
+    }
+
     private func videoSectionCard(_ card: FeatureVideoSectionCard) -> some View {
         Button {
             onSelectVideoSection(card.section)
         } label: {
             VStack(alignment: .leading, spacing: 10) {
-                PlaceholderArtwork(paletteIndex: card.paletteIndex, cornerRadius: 14, symbol: card.symbol)
+                Group {
+                    if let previewItem = card.previewItem,
+                       let videoURL = previewItem.coverVideoURL {
+                        RemoteLoopingVideoArtworkView(
+                            videoURL: videoURL,
+                            fallbackImageURL: previewItem.effectiveCoverURL,
+                            paletteIndex: card.paletteIndex,
+                            cornerRadius: 14
+                        )
+                    } else if let previewItem = card.previewItem {
+                        RemoteArtworkView(
+                            url: previewItem.effectiveCoverURL,
+                            paletteIndex: card.paletteIndex,
+                            cornerRadius: 14,
+                            contentMode: .fill
+                        )
+                    } else {
+                        PlaceholderArtwork(paletteIndex: card.paletteIndex, cornerRadius: 14, symbol: card.symbol)
+                    }
+                }
                     .frame(height: 124)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .overlay(alignment: .bottomLeading) {
@@ -195,8 +255,85 @@ private struct FeatureVideoSectionCard: Identifiable {
     let subtitle: String
     let symbol: String
     let paletteIndex: Int
+    let previewItem: RemoteFeatureItem?
 
     var id: String { section.id }
+}
+
+private struct LocalLoopingVideoArtworkView: View {
+    let videoURL: URL
+    let cornerRadius: CGFloat
+
+    @StateObject private var engine = LocalLoopingVideoEngine()
+
+    var body: some View {
+        LocalLoopingVideoPlayerView(player: engine.player)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .onAppear {
+                engine.configure(url: videoURL)
+                engine.play()
+            }
+            .task(id: videoURL) {
+                engine.configure(url: videoURL)
+                engine.play()
+            }
+            .onDisappear {
+                engine.pause()
+            }
+    }
+}
+
+private final class LocalLoopingVideoEngine: ObservableObject {
+    let player = AVQueuePlayer()
+    private var looper: AVPlayerLooper?
+    private var currentURL: URL?
+
+    init() {
+        player.isMuted = true
+        player.actionAtItemEnd = .none
+    }
+
+    func configure(url: URL) {
+        guard currentURL != url else { return }
+        currentURL = url
+        player.pause()
+        player.removeAllItems()
+        looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
+    }
+
+    func play() {
+        player.play()
+    }
+
+    func pause() {
+        player.pause()
+    }
+}
+
+private struct LocalLoopingVideoPlayerView: UIViewRepresentable {
+    let player: AVQueuePlayer
+
+    func makeUIView(context: Context) -> LocalLoopingVideoPlayerContainerView {
+        let view = LocalLoopingVideoPlayerContainerView()
+        view.playerLayer.player = player
+        view.playerLayer.videoGravity = .resizeAspectFill
+        return view
+    }
+
+    func updateUIView(_ uiView: LocalLoopingVideoPlayerContainerView, context: Context) {
+        uiView.playerLayer.player = player
+        uiView.playerLayer.videoGravity = .resizeAspectFill
+    }
+}
+
+private final class LocalLoopingVideoPlayerContainerView: UIView {
+    override static var layerClass: AnyClass {
+        AVPlayerLayer.self
+    }
+
+    var playerLayer: AVPlayerLayer {
+        layer as! AVPlayerLayer
+    }
 }
 
 struct AIChatView: View {
@@ -214,16 +351,16 @@ struct AIChatView: View {
     @State private var previewingImage: UIImage?
     @State private var previewingURL: URL?
     @State private var savingMessageIDs: Set<UUID> = []
+    @State private var downloadingMessageIDs: Set<UUID> = []
 
     let onClose: () -> Void
 
     private let pageHorizontalPadding: CGFloat = 15
     private let inputPanelHorizontalPadding: CGFloat = 10
     private let inputPanelBottomPadding: CGFloat = 10
-    private let contentBottomInset: CGFloat = 164
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             GlamProTheme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -240,21 +377,19 @@ struct AIChatView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, pageHorizontalPadding)
-            .padding(.bottom, contentBottomInset)
-
+        }
+        .safeAreaInset(edge: .bottom) {
             inputPanel
                 .padding(.horizontal, inputPanelHorizontalPadding)
                 .padding(.bottom, inputPanelBottomPadding)
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
         .overlay {
             if showUploadSourceSheet {
                 FeatureUploadSourceSheet(
                     onClose: { showUploadSourceSheet = false },
                     onPickPhotoOrVideo: {
                         showUploadSourceSheet = false
-                        pickerSource = .photoLibrary
-                        isShowingMediaPicker = true
+                        Task { await presentPhotoLibraryPickerIfAuthorized() }
                     },
                     onPickCamera: {
                         showUploadSourceSheet = false
@@ -530,21 +665,39 @@ struct AIChatView: View {
                 }
 
                 if message.role == .assistant, message.image != nil || message.imageURL != nil {
-                    Button {
-                        Task { await saveMessageImage(message) }
-                    } label: {
-                        Text(savingMessageIDs.contains(message.id) ? "Saving..." : "Save")
-                            .font(.calm(12, weight: .bold))
-                            .foregroundColor(.white.opacity(0.92))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.14))
-                            )
+                    HStack(spacing: 8) {
+                        Button {
+                            Task { await saveMessageImage(message) }
+                        } label: {
+                            Text(savingMessageIDs.contains(message.id) ? "Saving..." : "Save")
+                                .font(.calm(12, weight: .bold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.white.opacity(0.14))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(savingMessageIDs.contains(message.id))
+
+                        Button {
+                            Task { await downloadMessageImage(message) }
+                        } label: {
+                            Text(downloadingMessageIDs.contains(message.id) ? "Downloading..." : "Download")
+                                .font(.calm(12, weight: .bold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.white.opacity(0.14))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(downloadingMessageIDs.contains(message.id))
                     }
-                    .buttonStyle(.plain)
-                    .disabled(savingMessageIDs.contains(message.id))
                 }
 
                 if message.isGenerating {
@@ -695,6 +848,28 @@ struct AIChatView: View {
         }
     }
 
+    @MainActor
+    private func downloadMessageImage(_ message: FeatureChatMessage) async {
+        guard !downloadingMessageIDs.contains(message.id) else { return }
+        downloadingMessageIDs.insert(message.id)
+        defer { downloadingMessageIDs.remove(message.id) }
+
+        do {
+            if let image = message.image {
+                try await FeatureAPIBridge.saveImageToPhotoLibrary(image)
+            } else if let url = message.imageURL,
+                      let image = try await FeatureAPIBridge.loadPreviewImage(from: url) {
+                try await FeatureAPIBridge.saveImageToPhotoLibrary(image)
+            } else {
+                throw APIError.missingData
+            }
+
+            alertItem = FeatureAlertItem(title: "Downloaded", message: "Image downloaded to your Photos.")
+        } catch {
+            alertItem = FeatureAlertItem(title: "Download Failed", message: error.localizedDescription)
+        }
+    }
+
     private func dismissAIChatKeyboard() {
         isInputFocused = false
         UIApplication.shared.sendAction(
@@ -703,6 +878,28 @@ struct AIChatView: View {
             from: nil,
             for: nil
         )
+    }
+
+    @MainActor
+    private func presentPhotoLibraryPickerIfAuthorized() async {
+        let currentStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        let resolvedStatus: PHAuthorizationStatus
+        if currentStatus == .notDetermined {
+            resolvedStatus = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        } else {
+            resolvedStatus = currentStatus
+        }
+
+        guard resolvedStatus == .authorized || resolvedStatus == .limited else {
+            alertItem = FeatureAlertItem(
+                title: "Photo Access Needed",
+                message: "Please allow Photos access in Settings to pick images or videos."
+            )
+            return
+        }
+
+        pickerSource = .photoLibrary
+        isShowingMediaPicker = true
     }
 }
 
@@ -768,8 +965,7 @@ struct CustomStylesView: View {
                     onClose: { showUploadSourceSheet = false },
                     onPickPhotoOrVideo: {
                         showUploadSourceSheet = false
-                        pickerSource = .photoLibrary
-                        isShowingMediaPicker = true
+                        Task { await presentPhotoLibraryPickerIfAuthorized() }
                     },
                     onPickCamera: {
                         showUploadSourceSheet = false
@@ -927,10 +1123,6 @@ struct CustomStylesView: View {
             .buttonStyle(.plain)
             .disabled(!canSubmitCustomStyles)
 
-            Text("1 Coin")
-                .font(.calm(13, weight: .medium))
-                .foregroundColor(.white.opacity(0.5))
-
             if selectedMediaAsset != nil {
                 Text("1 media selected")
                     .font(.calm(12, weight: .medium))
@@ -1031,6 +1223,28 @@ struct CustomStylesView: View {
             alertItem = FeatureAlertItem(title: "Request Failed", message: error.localizedDescription)
         }
     }
+
+    @MainActor
+    private func presentPhotoLibraryPickerIfAuthorized() async {
+        let currentStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        let resolvedStatus: PHAuthorizationStatus
+        if currentStatus == .notDetermined {
+            resolvedStatus = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        } else {
+            resolvedStatus = currentStatus
+        }
+
+        guard resolvedStatus == .authorized || resolvedStatus == .limited else {
+            alertItem = FeatureAlertItem(
+                title: "Photo Access Needed",
+                message: "Please allow Photos access in Settings to pick images or videos."
+            )
+            return
+        }
+
+        pickerSource = .photoLibrary
+        isShowingMediaPicker = true
+    }
 }
 
 struct MotionSwapView: View {
@@ -1087,8 +1301,7 @@ struct MotionSwapView: View {
                     onClose: { showUploadSourceSheet = false },
                     onPickPhotoOrVideo: {
                         showUploadSourceSheet = false
-                        pickerSource = .photoLibrary
-                        isShowingMediaPicker = true
+                        Task { await presentPhotoLibraryPickerIfAuthorized() }
                     },
                     onPickCamera: {
                         showUploadSourceSheet = false
@@ -1317,10 +1530,6 @@ struct MotionSwapView: View {
             .buttonStyle(.plain)
             .disabled(!canSubmitMotionSwap)
 
-            Text("\(requiredCoins) Coin\(requiredCoins > 1 ? "s" : "")")
-                .font(.calm(13, weight: .medium))
-                .foregroundColor(.white.opacity(0.5))
-
             if selectedImageAsset != nil || selectedVideoAssetURL != nil {
                 Text("\(selectedImageAsset == nil ? 0 : 1) image, \(selectedVideoAssetURL == nil ? 0 : 1) video selected")
                     .font(.calm(12, weight: .medium))
@@ -1475,6 +1684,28 @@ struct MotionSwapView: View {
 
         return raw
     }
+
+    @MainActor
+    private func presentPhotoLibraryPickerIfAuthorized() async {
+        let currentStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        let resolvedStatus: PHAuthorizationStatus
+        if currentStatus == .notDetermined {
+            resolvedStatus = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        } else {
+            resolvedStatus = currentStatus
+        }
+
+        guard resolvedStatus == .authorized || resolvedStatus == .limited else {
+            alertItem = FeatureAlertItem(
+                title: "Photo Access Needed",
+                message: "Please allow Photos access in Settings to pick images or videos."
+            )
+            return
+        }
+
+        pickerSource = .photoLibrary
+        isShowingMediaPicker = true
+    }
 }
 
 private enum MotionSwapUploadTarget {
@@ -1522,10 +1753,20 @@ private struct FeatureChatMessage: Identifiable {
 }
 
 private struct FeatureImagePreviewSheet: View {
+    private struct SaveFeedback: Identifiable {
+        let id = UUID()
+        let title: String
+        let message: String
+    }
+
     let image: UIImage?
     let imageURL: URL?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+    @State private var isSaving = false
+    @State private var saveFeedback: SaveFeedback?
+    @State private var showOpenSettingsAlert = false
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -1563,6 +1804,109 @@ private struct FeatureImagePreviewSheet: View {
             .padding(.trailing, 14)
             .padding(.top, 14)
         }
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 0) {
+                Button {
+                    guard !isSaving else { return }
+                    Task { await savePreviewImage() }
+                } label: {
+                    HStack(spacing: 8) {
+                        if isSaving {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        Text(isSaving ? "Downloading..." : "Download")
+                            .font(.calm(16, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "F1945C"), Color(hex: "EA6A6A")],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(isSaving)
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+                .padding(.bottom, 12)
+            }
+            .background(Color.black.opacity(0.55))
+        }
+        .alert(item: $saveFeedback) { item in
+            Alert(
+                title: Text(item.title),
+                message: Text(item.message),
+                dismissButton: .default(Text("OK"))
+            )
+        }
+        .alert("Photos Access Needed", isPresented: $showOpenSettingsAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Settings") { openAppSettings() }
+        } message: {
+            Text("Please allow photo access in Settings so Glam Pro can save images.")
+        }
+    }
+
+    @MainActor
+    private func savePreviewImage() async {
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            let status = await requestPhotoLibraryAddPermission()
+            guard status == .authorized || status == .limited else {
+                if status == .denied || status == .restricted {
+                    showOpenSettingsAlert = true
+                } else {
+                    saveFeedback = SaveFeedback(
+                        title: "Download Failed",
+                        message: "Photo permission is required to download this image."
+                    )
+                }
+                return
+            }
+
+            if let image {
+                try await FeatureAPIBridge.saveImageToPhotoLibrary(image)
+            } else if let imageURL,
+                      let loadedImage = try await FeatureAPIBridge.loadPreviewImage(from: imageURL) {
+                try await FeatureAPIBridge.saveImageToPhotoLibrary(loadedImage)
+            } else {
+                throw APIError.missingData
+            }
+
+            saveFeedback = SaveFeedback(title: "Downloaded", message: "Image downloaded to your Photos.")
+        } catch {
+            saveFeedback = SaveFeedback(title: "Download Failed", message: error.localizedDescription)
+        }
+    }
+
+    private func requestPhotoLibraryAddPermission() async -> PHAuthorizationStatus {
+        let currentStatus = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        if currentStatus == .notDetermined {
+            return await withCheckedContinuation { continuation in
+                PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+                    continuation.resume(returning: status)
+                }
+            }
+        }
+        return currentStatus
+    }
+
+    private func openAppSettings() {
+        guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+        openURL(settingsURL)
     }
 }
 

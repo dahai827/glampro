@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Photos
 
 struct UploadPhotosView: View {
     @EnvironmentObject private var appBootstrap: AppBootstrapStore
@@ -14,6 +15,7 @@ struct UploadPhotosView: View {
     @State private var pickerSource: UIImagePickerController.SourceType = .photoLibrary
     @State private var isShowingImagePicker = false
     @State private var showCameraAlert = false
+    @State private var photoPermissionMessage: String?
 
     private var item: RemoteFeatureItem? {
         previewGenerationStore.activeItem ?? appBootstrap.selectedPreviewItem
@@ -59,6 +61,21 @@ struct UploadPhotosView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("This device does not support camera capture.")
+        }
+        .alert(
+            "Photo Access Needed",
+            isPresented: Binding(
+                get: { photoPermissionMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        photoPermissionMessage = nil
+                    }
+                }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(photoPermissionMessage ?? "")
         }
         .task(id: item?.id) {
             previewGenerationStore.syncPreviewItem(item)
@@ -122,8 +139,7 @@ struct UploadPhotosView: View {
         HStack(spacing: 12) {
             pickOption(icon: "photo.fill", title: "Pick Photo") {
                 activeSlotIndex = min(activeSlotIndex, imageSlotCount - 1)
-                pickerSource = .photoLibrary
-                isShowingImagePicker = true
+                Task { await presentPhotoLibraryPickerIfAuthorized() }
             }
 
             pickOption(icon: "camera.fill", title: "Camera") {
@@ -345,6 +361,25 @@ struct UploadPhotosView: View {
 
     private var requirementText: String {
         imageSlotCount > 1 ? "Upload \(imageSlotCount) photos to continue" : "Upload 1 photo to continue"
+    }
+
+    @MainActor
+    private func presentPhotoLibraryPickerIfAuthorized() async {
+        let currentStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        let resolvedStatus: PHAuthorizationStatus
+        if currentStatus == .notDetermined {
+            resolvedStatus = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        } else {
+            resolvedStatus = currentStatus
+        }
+
+        guard resolvedStatus == .authorized || resolvedStatus == .limited else {
+            photoPermissionMessage = "Please allow Photos access in Settings to pick images."
+            return
+        }
+
+        pickerSource = .photoLibrary
+        isShowingImagePicker = true
     }
 }
 

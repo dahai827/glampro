@@ -4,7 +4,7 @@ import Security
 final class KeychainManager {
     private let service: String
 
-    init(service: String = Bundle.main.bundleIdentifier ?? "com.glampro.GlamPro") {
+    init(service: String = Bundle.main.bundleIdentifier ?? "com.liuying.glampro") {
         self.service = service
     }
 

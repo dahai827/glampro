@@ -1,5 +1,6 @@
 import SwiftUI
 import StoreKit
+import AVFoundation
 
 struct SubscriptionOfferOneView: View {
     @EnvironmentObject private var appBootstrap: AppBootstrapStore
@@ -399,12 +400,12 @@ struct SubscriptionOfferTwoView: View {
     var showsCloseWithDelay = true
 
     private let featureBullets = [
-        "Unlimited AI creations",
-        "HD exports with no watermark",
-        "Priority generation speed",
-        "Exclusive premium styles",
-        "Bonus credits every cycle",
-        "Cancel anytime"
+        "Unlock all premium AI tools",
+        "Advanced editing for pro results",
+        "1000+ exclusive style presets",
+        "New filters updated every day",
+        "Export in ultra-clear HD quality",
+        "Create clean videos with no watermark"
     ]
 
     private var selectedItem: RemoteFeatureItem? {
@@ -453,28 +454,60 @@ struct SubscriptionOfferTwoView: View {
         sessionManager.isPro || !showsCloseWithDelay || showCloseButton
     }
 
+    private struct PaywallMetrics {
+        // iPhone 17 Pro baseline screenshot size.
+        static let baseline = CGSize(width: 402, height: 874)
+
+        let scale: CGFloat
+        let widthScale: CGFloat
+
+        init(size: CGSize) {
+            widthScale = size.width / Self.baseline.width
+            scale = min(size.width / Self.baseline.width, size.height / Self.baseline.height)
+        }
+
+        func v(_ value: CGFloat) -> CGFloat { value * scale }
+        func h(_ value: CGFloat) -> CGFloat { value * widthScale }
+
+        var panelTopSpacer: CGFloat { max(v(188), v(214)) }
+        var panelHorizontalPadding: CGFloat { h(20) }
+        var panelCornerRadius: CGFloat { v(34) }
+        var ctaHorizontalInset: CGFloat { 0 }
+        var ctaHeight: CGFloat { v(108) }
+        var ctaBottomPadding: CGFloat { 0 }
+    }
+
     var body: some View {
         GeometryReader { geometry in
             let safeBottom = geometry.safeAreaInsets.bottom
+            let metrics = PaywallMetrics(size: geometry.size)
+            let ctaTotalHeight = metrics.ctaHeight + safeBottom
 
-            ScrollView(showsIndicators: false) {
+            ZStack(alignment: .bottom) {
                 VStack(spacing: 0) {
-                    Spacer(minLength: max(geometry.size.height * 0.27, 210))
+                    Spacer(minLength: max(geometry.size.height * 0.15, metrics.v(104)))
 
-                    paywallPanel(bottomInset: safeBottom)
+                    paywallPanel(bottomInset: 0, metrics: metrics)
+                        .padding(.bottom, ctaTotalHeight - metrics.v(4))
                 }
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: geometry.size.height, alignment: .bottom)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+
+                continueButton(bottomInset: safeBottom, metrics: metrics)
+                    .padding(.horizontal, metrics.ctaHorizontalInset)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
             .background {
-                SubscriptionBackdropView(item: selectedItem, blurRadius: 22, darkness: 0.42)
+                SubscriptionPaywallVideoBackdropView(
+                    isReviewVersion: appBootstrap.isReviewVersion,
+                    blurRadius: 22,
+                    darkness: 0.42
+                )
                     .ignoresSafeArea()
             }
             .overlay(alignment: .top) {
-                headerBar
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
+                headerBar(metrics: metrics)
+                    .padding(.horizontal, metrics.h(16))
+                    .padding(.top, metrics.v(12))
                     .zIndex(2)
             }
         }
@@ -514,13 +547,13 @@ struct SubscriptionOfferTwoView: View {
         }
     }
 
-    private var headerBar: some View {
-        HStack(spacing: 12) {
+    private func headerBar(metrics: PaywallMetrics) -> some View {
+        HStack(spacing: metrics.h(12)) {
             Button(action: onClose) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: metrics.v(16), weight: .bold))
                     .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
+                    .frame(width: metrics.v(40), height: metrics.v(40))
                     .background(Circle().fill(Color.black.opacity(0.24)))
                     .overlay(Circle().stroke(Color.white.opacity(0.08), lineWidth: 1))
                     .contentShape(Rectangle())
@@ -531,163 +564,161 @@ struct SubscriptionOfferTwoView: View {
 
             Spacer(minLength: 0)
 
-            Button {
-                restorePurchase()
-            } label: {
-                Text(actionState == .restoring ? "Restoring..." : "Restore")
-                    .font(.calm(14, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .frame(height: 38)
-                    .background(Capsule().fill(Color.black.opacity(0.24)))
-                    .overlay(Capsule().stroke(Color.white.opacity(0.08), lineWidth: 1))
+            HStack(spacing: metrics.h(5)) {
+                Image(systemName: "c.circle.fill")
+                    .font(.system(size: metrics.v(13), weight: .black))
+                Text("\(sessionManager.creditsBalance)")
+                    .font(.calm(metrics.v(14), weight: .bold))
             }
-            .buttonStyle(.plain)
-            .disabled(actionState != .idle)
+            .foregroundColor(.white)
+            .padding(.horizontal, metrics.h(10))
+            .frame(height: metrics.v(28))
+            .background(Capsule().fill(Color.black.opacity(0.38)))
+            .overlay(Capsule().stroke(Color.white.opacity(0.09), lineWidth: 1))
         }
         .frame(maxWidth: .infinity)
     }
 
-    private func paywallPanel(bottomInset: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Unlock Glam Pro")
-                    .font(.calm(32, weight: .heavy))
+    private func paywallPanel(bottomInset: CGFloat, metrics: PaywallMetrics) -> some View {
+        VStack(alignment: .leading, spacing: metrics.v(16)) {
+            VStack(alignment: .leading, spacing: metrics.v(10)) {
+                Text("Join Glam Pro")
+                    .font(.calm(metrics.v(32), weight: .heavy))
                     .foregroundColor(.white)
-
-                Text("Subscribe for unlimited creation, faster generation, and premium templates.")
-                    .font(.calm(15, weight: .medium))
-                    .foregroundColor(.white.opacity(0.78))
-                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: metrics.v(12)) {
                 ForEach(featureBullets, id: \.self) { bullet in
-                    SubscriptionFeatureRow(title: bullet)
+                    SubscriptionFeatureRow(
+                        title: bullet,
+                        horizontalSpacing: metrics.h(14),
+                        dotSize: metrics.v(11),
+                        dotSlotWidth: metrics.h(18),
+                        fontSize: metrics.v(16)
+                    )
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(spacing: 12) {
+            VStack(spacing: metrics.v(12)) {
                 if let yearlyPlan {
-                    yearlyCard(yearlyPlan)
+                    yearlyCard(yearlyPlan, metrics: metrics)
                 }
 
                 if let weeklyPlan {
-                    weeklyCard(weeklyPlan)
+                    weeklyCard(weeklyPlan, metrics: metrics)
                 }
             }
 
-            Button {
-                purchaseSelectedPlan()
-            } label: {
-                VStack(spacing: continueButtonSubtitle == nil ? 0 : 2) {
-                    Text(continueButtonTitle)
-                        .font(.calm(18, weight: .bold))
-                        .foregroundColor(.white)
-                    if let continueButtonSubtitle {
-                        Text(continueButtonSubtitle)
-                            .font(.calm(13, weight: .medium))
-                            .foregroundColor(.white.opacity(0.92))
-                    }
+            HStack(spacing: metrics.h(12)) {
+                Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                Text("·")
+                Link("Privacy", destination: URL(string: "http://www.streamflowai.store/glampro-privacy-policy.html")!)
+                Text("·")
+                Button(action: restorePurchase) {
+                    Text(actionState == .restoring ? "Restoring..." : "Restore")
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(canInteract ? LinearGradient(colors: [GlamProTheme.purple, Color(hex: "8D54FF")], startPoint: .leading, endPoint: .trailing) : LinearGradient(colors: [Color.white.opacity(0.18), Color.white.opacity(0.12)], startPoint: .leading, endPoint: .trailing))
-                )
+                .disabled(actionState != .idle)
             }
-            .buttonStyle(.plain)
-            .disabled(!canInteract || effectiveSelectedPlan == nil)
-
-            VStack(spacing: 8) {
-                Text("Auto-renewable subscription. Cancel anytime in App Store settings.")
-                    .font(.calm(12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-                    .multilineTextAlignment(.center)
-
-                HStack(spacing: 12) {
-                    Text("Terms")
-                    Text("·")
-                    Text("Privacy")
-                    Text("·")
-                    Text("Restore Purchase")
-                }
-                .font(.calm(12, weight: .medium))
-                .foregroundColor(.white.opacity(0.54))
-            }
+            .font(.calm(metrics.v(12), weight: .medium))
+            .foregroundColor(.white.opacity(0.48))
             .frame(maxWidth: .infinity)
-            .padding(.top, 4)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 24)
-        .padding(.bottom, max(bottomInset, 10) + 18)
+        .padding(.horizontal, metrics.panelHorizontalPadding)
+        .padding(.top, metrics.v(24))
+        .padding(.bottom, max(bottomInset, metrics.v(10)) + metrics.v(8))
         .background(
-            RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(Color.black.opacity(0.38))
-                .ignoresSafeArea(edges: .bottom)
+            RoundedRectangle(cornerRadius: metrics.panelCornerRadius, style: .continuous)
+                .fill(Color.black.opacity(0.54))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: metrics.panelCornerRadius, style: .continuous)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
     }
 
-    private func yearlyCard(_ plan: SubscriptionPlan) -> some View {
+    private func continueButton(bottomInset: CGFloat, metrics: PaywallMetrics) -> some View {
+        let gradientFill = canInteract
+            ? LinearGradient(colors: [Color(hex: "FF3E74"), Color(hex: "F59D5D")], startPoint: .leading, endPoint: .trailing)
+            : LinearGradient(colors: [Color.white.opacity(0.18), Color.white.opacity(0.12)], startPoint: .leading, endPoint: .trailing)
+
+        return Button {
+            purchaseSelectedPlan()
+        } label: {
+            ZStack(alignment: .top) {
+                SubscriptionTopRoundedShape(radius: metrics.v(38))
+                    .fill(gradientFill)
+                    .frame(height: metrics.ctaHeight + bottomInset + 1)
+
+                Text(continueButtonTitle)
+                    .font(.calm(metrics.v(18), weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, metrics.v(30))
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: metrics.ctaHeight + bottomInset + 1, alignment: .top)
+        }
+        .buttonStyle(.plain)
+        .disabled(!canInteract || effectiveSelectedPlan == nil)
+        .padding(.bottom, metrics.ctaBottomPadding)
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    private func yearlyCard(_ plan: SubscriptionPlan, metrics: PaywallMetrics) -> some View {
         let isSelected = effectiveSelectedPlan?.id == plan.id
-        let leftText = appBootstrap.isReviewVersion ? plan.weeklyEquivalentText : plan.annualDisplayText
-        let rightText = appBootstrap.isReviewVersion ? plan.annualDisplayText : plan.weeklyEquivalentText
+        let leftText = "\(plan.annualDisplayText) / year"
+        let rightText: String = {
+            if appBootstrap.isReviewVersion {
+                return "\(plan.annualDisplayText) / yearly"
+            }
+            return plan.weeklyEquivalentText.replacingOccurrences(of: "/", with: " / ")
+        }()
 
         return Button {
             selectPlan(plan)
         } label: {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: metrics.h(12)) {
+                VStack(alignment: .leading, spacing: metrics.v(4)) {
                     Text(plan.shortTitle)
-                        .font(.calm(18, weight: .heavy))
+                        .font(.calm(metrics.v(50.0 / 3.0), weight: .heavy))
                         .foregroundColor(.white)
 
                     Text(leftText)
-                        .font(.calm(14, weight: .bold))
+                        .font(.calm(metrics.v(48.0 / 3.0), weight: .bold))
                         .foregroundColor(.white.opacity(0.82))
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
-
-                    Text(plan.detailText)
-                        .font(.calm(12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(2)
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: metrics.h(8))
 
                 Text(rightText)
-                    .font(.calm(28, weight: .heavy))
-                    .foregroundColor(.white)
+                    .font(.calm(metrics.v(50.0 / 3.0), weight: .bold))
+                    .foregroundColor(.white.opacity(0.86))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 18)
+            .padding(.horizontal, metrics.h(18))
+            .padding(.vertical, metrics.v(12))
             .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: metrics.v(86))
             .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(isSelected ? Color(hex: "8E33EA").opacity(0.9) : Color.white.opacity(0.12))
+                RoundedRectangle(cornerRadius: metrics.v(22), style: .continuous)
+                    .fill(Color.white.opacity(0.12))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(isSelected ? Color.clear : Color.white.opacity(0.18), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: metrics.v(22), style: .continuous)
+                    .stroke(isSelected ? Color(hex: "F5A256") : Color.white.opacity(0.16), lineWidth: 2)
             )
             .overlay(alignment: .topTrailing) {
                 if isSelected {
                     Text(yearlyBadgeText)
-                        .font(.calm(12, weight: .bold))
+                        .font(.calm(metrics.v(13), weight: .bold))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .frame(height: 26)
-                        .background(Capsule().fill(Color(hex: "6B1DD8").opacity(0.96)))
-                        .offset(x: -10, y: -12)
+                        .padding(.horizontal, metrics.h(12))
+                        .frame(height: metrics.v(24))
+                        .background(Capsule().fill(Color(hex: "F5A256")))
+                        .offset(x: -metrics.h(12), y: -metrics.v(10))
                 }
             }
         }
@@ -695,41 +726,39 @@ struct SubscriptionOfferTwoView: View {
         .disabled(!canInteract)
     }
 
-    private func weeklyCard(_ plan: SubscriptionPlan) -> some View {
+    private func weeklyCard(_ plan: SubscriptionPlan, metrics: PaywallMetrics) -> some View {
         let isSelected = effectiveSelectedPlan?.id == plan.id
 
         return Button {
             selectPlan(plan)
             purchaseSelectedPlan(triggeredByWeeklyTap: true)
         } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: metrics.h(12)) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(plan.shortTitle)
-                        .font(.calm(18, weight: .heavy))
+                        .font(.calm(metrics.v(50.0 / 3.0), weight: .heavy))
                         .foregroundColor(.white)
-                    Text(plan.detailText)
-                        .font(.calm(13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.72))
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: metrics.h(8))
 
                 Text(plan.weeklyDisplayText)
-                    .font(.calm(24, weight: .heavy))
+                    .font(.calm(metrics.v(50.0 / 3.0), weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.74)
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 18)
+            .padding(.horizontal, metrics.h(18))
+            .padding(.vertical, metrics.v(12))
             .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: metrics.v(72))
             .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(isSelected ? Color(hex: "8E33EA").opacity(0.9) : Color.white.opacity(0.12))
+                RoundedRectangle(cornerRadius: metrics.v(22), style: .continuous)
+                    .fill(Color.white.opacity(0.12))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(isSelected ? Color.clear : Color.white.opacity(0.18), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: metrics.v(22), style: .continuous)
+                    .stroke(isSelected ? Color(hex: "F5A256") : Color.white.opacity(0.16), lineWidth: 2)
             )
         }
         .buttonStyle(.plain)
@@ -737,17 +766,7 @@ struct SubscriptionOfferTwoView: View {
     }
 
     private var yearlyBadgeText: String {
-        if let yearlyAmount = yearlyPlan?.rawAmount,
-           let weeklyAmount = weeklyPlan?.rawAmount,
-           yearlyAmount > 0,
-           weeklyAmount > 0 {
-            let annualFromWeekly = weeklyAmount * 52
-            let savings = Int((((annualFromWeekly - yearlyAmount) / annualFromWeekly) * 100).rounded())
-            if savings > 0 {
-                return "Save \(savings)%"
-            }
-        }
-        return yearlyPlan?.badgeText ?? "Best"
+        "Save 89%"
     }
 
     private func revealCloseButtonIfNeeded() {
@@ -799,6 +818,8 @@ struct SubscriptionOfferTwoView: View {
                 try await subscriptionStore.purchase(plan: plan, sessionManager: sessionManager) {
                     actionState = .verifying
                 }
+                actionState = .idle
+                onSubscribed?()
             } catch let error as SubscriptionStoreError {
                 if case .userCancelled = error {
                     actionState = .idle
@@ -822,6 +843,8 @@ struct SubscriptionOfferTwoView: View {
                 try await subscriptionStore.restorePurchases(sessionManager: sessionManager) {
                     actionState = .verifying
                 }
+                actionState = .idle
+                onSubscribed?()
             } catch let error as SubscriptionStoreError {
                 actionState = .idle
                 if case .userCancelled = error {
@@ -989,6 +1012,8 @@ private enum SubscriptionStoreError: LocalizedError {
 @MainActor
 final class SubscriptionStore: ObservableObject {
     static let shared = SubscriptionStore()
+    private static let yearlyProductID = "subs_glampro_yearly"
+    private static let weeklyProductID = "subs_glampro_weekly"
 
     @Published private(set) var plans: [SubscriptionPlan] = SubscriptionStore.fallbackPlans
     @Published private(set) var isLoadingProducts = false
@@ -1096,6 +1121,18 @@ final class SubscriptionStore: ObservableObject {
         }
     }
 
+    func handleTransactionUpdate(
+        _ verification: VerificationResult<StoreKit.Transaction>,
+        sessionManager: SessionManager
+    ) async {
+        do {
+            try await verifySubscription(verification: verification, sessionManager: sessionManager)
+            print("[StoreKit][Subscription] handled transaction update")
+        } catch {
+            print("[StoreKit][Subscription] transaction update handling failed: \(error.localizedDescription)")
+        }
+    }
+
     private func product(for plan: SubscriptionPlan) -> Product? {
         plans.first(where: { $0.id == plan.id })?.product
     }
@@ -1144,6 +1181,11 @@ final class SubscriptionStore: ObservableObject {
             await sessionManager.refreshUserStatus()
         }
 
+        FacebookAnalyticsService.shared.logSubscribe(
+            planID: transaction.productID,
+            value: nil
+        )
+
         await transaction.finish()
     }
 
@@ -1161,12 +1203,24 @@ final class SubscriptionStore: ObservableObject {
     }
 
     private func normalizeConfigurations(_ configs: [SubscriptionProductConfiguration]) -> [SubscriptionProductConfiguration] {
-        let preferred = configs.filter {
-            let planType = normalizePlanType($0.planType, billingInterval: $0.billingInterval)
+        // Prefer exact product IDs first to avoid mismatching plans from backend noise.
+        let exactIDConfigs = configs.filter {
+            $0.productID == Self.yearlyProductID || $0.productID == Self.weeklyProductID
+        }
+        let typedConfigs = configs.filter {
+            let planType = normalizePlanType($0.planType, billingInterval: $0.billingInterval, productID: $0.productID)
             return planType == "yearly" || planType == "weekly"
         }
 
-        let source = preferred.isEmpty ? Self.fallbackConfigurations : preferred
+        let source: [SubscriptionProductConfiguration]
+        if !exactIDConfigs.isEmpty {
+            source = exactIDConfigs
+        } else if !typedConfigs.isEmpty {
+            source = typedConfigs
+        } else {
+            source = Self.fallbackConfigurations
+        }
+
         return source.sorted { lhs, rhs in
             let leftRank = sortRank(for: lhs)
             let rightRank = sortRank(for: rhs)
@@ -1175,7 +1229,7 @@ final class SubscriptionStore: ObservableObject {
     }
 
     private func sortRank(for config: SubscriptionProductConfiguration) -> Int {
-        switch normalizePlanType(config.planType, billingInterval: config.billingInterval) {
+        switch normalizePlanType(config.planType, billingInterval: config.billingInterval, productID: config.productID) {
         case "yearly": return 0
         case "weekly": return 1
         default: return 2
@@ -1183,17 +1237,18 @@ final class SubscriptionStore: ObservableObject {
     }
 
     private func makePlan(from config: SubscriptionProductConfiguration, product: Product?) -> SubscriptionPlan {
-        let normalizedPlanType = normalizePlanType(config.planType, billingInterval: config.billingInterval)
+        let normalizedPlanType = normalizePlanType(config.planType, billingInterval: config.billingInterval, productID: config.productID)
         let rawAmount = product.map { NSDecimalNumber(decimal: $0.price).doubleValue } ?? config.amount
-        let baseDisplayPrice = product?.displayPrice ?? formatCurrency(config.amount, currencyCode: config.currency) ?? (normalizedPlanType == "weekly" ? "$6.99" : "$39.99")
+        let rawBaseDisplayPrice = product?.displayPrice ?? formatCurrency(config.amount, currencyCode: config.currency) ?? (normalizedPlanType == "weekly" ? "$6.99" : "$39.99")
+        let baseDisplayPrice = sanitizePriceLabel(rawBaseDisplayPrice)
 
         let weeklyEquivalent: String
         if normalizedPlanType == "yearly" {
             if let product {
                 let perWeek = NSDecimalNumber(decimal: product.price).dividing(by: NSDecimalNumber(value: 52)).decimalValue
-                weeklyEquivalent = "\(perWeek.formatted(product.priceFormatStyle))/week"
+                weeklyEquivalent = "\(sanitizePriceLabel(perWeek.formatted(product.priceFormatStyle)))/week"
             } else if let amount = config.amount {
-                weeklyEquivalent = "\(formatCurrency(amount / 52, currencyCode: config.currency) ?? "$0.77")/week"
+                weeklyEquivalent = "\(sanitizePriceLabel(formatCurrency(amount / 52, currencyCode: config.currency) ?? "$0.77"))/week"
             } else {
                 weeklyEquivalent = "$0.77/week"
             }
@@ -1234,7 +1289,15 @@ final class SubscriptionStore: ObservableObject {
         )
     }
 
-    private func normalizePlanType(_ planType: String?, billingInterval: String?) -> String {
+    private func normalizePlanType(_ planType: String?, billingInterval: String?, productID: String) -> String {
+        let normalizedProductID = productID.lowercased()
+        if normalizedProductID == Self.yearlyProductID.lowercased() {
+            return "yearly"
+        }
+        if normalizedProductID == Self.weeklyProductID.lowercased() {
+            return "weekly"
+        }
+
         let plan = planType?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
         if plan == "yearly" || plan == "year" || plan == "annual" {
             return "yearly"
@@ -1263,9 +1326,15 @@ final class SubscriptionStore: ObservableObject {
         return formatter.string(from: NSNumber(value: amount))
     }
 
+    private func sanitizePriceLabel(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "US$", with: "$")
+            .replacingOccurrences(of: "US $", with: "$")
+    }
+
     private static let fallbackConfigurations: [SubscriptionProductConfiguration] = [
         SubscriptionProductConfiguration(
-            productID: "yearly_pro",
+            productID: yearlyProductID,
             productName: "Yearly",
             description: "Best value for unlimited access and HD exports",
             planType: "yearly",
@@ -1278,7 +1347,7 @@ final class SubscriptionStore: ObservableObject {
             features: nil
         ),
         SubscriptionProductConfiguration(
-            productID: "weekly_pro",
+            productID: weeklyProductID,
             productName: "Weekly",
             description: "Full premium access with flexible weekly billing",
             planType: "weekly",
@@ -1294,8 +1363,8 @@ final class SubscriptionStore: ObservableObject {
 
     private static let fallbackPlans: [SubscriptionPlan] = [
         SubscriptionPlan(
-            id: "yearly_pro",
-            storeKitProductID: "yearly_pro",
+            id: yearlyProductID,
+            storeKitProductID: yearlyProductID,
             title: "Yearly",
             planType: "yearly",
             detailText: "Best value for unlimited access and HD exports",
@@ -1307,8 +1376,8 @@ final class SubscriptionStore: ObservableObject {
             product: nil
         ),
         SubscriptionPlan(
-            id: "weekly_pro",
-            storeKitProductID: "weekly_pro",
+            id: weeklyProductID,
+            storeKitProductID: weeklyProductID,
             title: "Weekly",
             planType: "weekly",
             detailText: "Full premium access with flexible weekly billing",
@@ -1322,6 +1391,145 @@ final class SubscriptionStore: ObservableObject {
     ]
 }
 
+private struct SubscriptionPaywallVideoBackdropView: View {
+    let isReviewVersion: Bool
+    let blurRadius: CGFloat
+    let darkness: CGFloat
+
+    @StateObject private var videoEngine = SubscriptionLocalLoopVideoEngine()
+    @State private var didEnter = false
+
+    private var localVideoURL: URL? {
+        Bundle.main.url(forResource: "subscribe_video", withExtension: "mp4")
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black
+                .ignoresSafeArea()
+
+            if isReviewVersion {
+                Image("subscribe_image")
+                    .resizable()
+                    .scaledToFill()
+                    .scaleEffect(1.08)
+                    .offset(y: didEnter ? 0 : 44)
+                    .opacity(didEnter ? 1 : 0.04)
+                    .animation(.easeOut(duration: 0.55), value: didEnter)
+                    .mask(
+                        LinearGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: .white, location: 0.0),
+                                .init(color: .white, location: 0.68),
+                                .init(color: .white.opacity(0.76), location: 0.80),
+                                .init(color: .white.opacity(0.28), location: 0.92),
+                                .init(color: .clear, location: 1.0)
+                            ]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .onAppear {
+                        didEnter = true
+                    }
+            } else if let localVideoURL {
+                SubscriptionLocalLoopPlayerView(player: videoEngine.player)
+                    .scaleEffect(1.08)
+                    .offset(y: didEnter ? 0 : 44)
+                    .opacity(didEnter ? 1 : 0.04)
+                    .animation(.easeOut(duration: 0.55), value: didEnter)
+                    .mask(
+                        LinearGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: .white, location: 0.0),
+                                .init(color: .white, location: 0.68),
+                                .init(color: .white.opacity(0.76), location: 0.80),
+                                .init(color: .white.opacity(0.28), location: 0.92),
+                                .init(color: .clear, location: 1.0)
+                            ]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .onAppear {
+                        videoEngine.configure(url: localVideoURL)
+                        videoEngine.play()
+                        didEnter = true
+                    }
+                    .onDisappear {
+                        videoEngine.pause()
+                    }
+            }
+
+            LinearGradient(
+                colors: [Color.black.opacity(0.00), Color.black.opacity(0.18)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            LinearGradient(
+                colors: [Color.clear, Color.black.opacity(0.04), Color.black.opacity(0.30)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+        .ignoresSafeArea()
+    }
+}
+
+private final class SubscriptionLocalLoopVideoEngine: ObservableObject {
+    let player = AVQueuePlayer()
+    private var looper: AVPlayerLooper?
+    private var currentURL: URL?
+
+    init() {
+        player.isMuted = true
+        player.actionAtItemEnd = .none
+    }
+
+    func configure(url: URL) {
+        guard currentURL != url else { return }
+        currentURL = url
+        player.pause()
+        player.removeAllItems()
+        looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
+    }
+
+    func play() {
+        player.play()
+    }
+
+    func pause() {
+        player.pause()
+    }
+}
+
+private struct SubscriptionLocalLoopPlayerView: UIViewRepresentable {
+    let player: AVQueuePlayer
+
+    func makeUIView(context: Context) -> SubscriptionLocalLoopPlayerContainerView {
+        let view = SubscriptionLocalLoopPlayerContainerView()
+        view.playerLayer.player = player
+        view.playerLayer.videoGravity = .resizeAspectFill
+        return view
+    }
+
+    func updateUIView(_ uiView: SubscriptionLocalLoopPlayerContainerView, context: Context) {
+        uiView.playerLayer.player = player
+        uiView.playerLayer.videoGravity = .resizeAspectFill
+    }
+}
+
+private final class SubscriptionLocalLoopPlayerContainerView: UIView {
+    override static var layerClass: AnyClass {
+        AVPlayerLayer.self
+    }
+
+    var playerLayer: AVPlayerLayer {
+        layer as! AVPlayerLayer
+    }
+}
+
 private struct SubscriptionBackdropView: View {
     let item: RemoteFeatureItem?
     let blurRadius: CGFloat
@@ -1333,6 +1541,9 @@ private struct SubscriptionBackdropView: View {
 
     var body: some View {
         ZStack {
+            Color(hex: "829FB8")
+                .ignoresSafeArea()
+
             RemoteArtworkView(
                 url: item?.effectiveCoverURL,
                 paletteIndex: paletteIndex,
@@ -1445,18 +1656,39 @@ private struct SubscriptionGuidePreviewCard: View {
 
 private struct SubscriptionFeatureRow: View {
     let title: String
+    let horizontalSpacing: CGFloat
+    let dotSize: CGFloat
+    let dotSlotWidth: CGFloat
+    let fontSize: CGFloat
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(GlamProTheme.purple)
-                .frame(width: 22)
+        HStack(spacing: horizontalSpacing) {
+            Circle()
+                .fill(Color(hex: "F5A256"))
+                .frame(width: dotSize, height: dotSize)
+                .frame(width: dotSlotWidth)
 
             Text(title)
-                .font(.calm(16, weight: .medium))
+                .font(.calm(fontSize, weight: .medium))
                 .foregroundColor(.white)
         }
+    }
+}
+
+private struct SubscriptionTopRoundedShape: Shape {
+    let radius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let corner = min(radius, min(rect.width, rect.height) * 0.5)
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: rect.maxY))
+        path.addLine(to: CGPoint(x: 0, y: corner))
+        path.addQuadCurve(to: CGPoint(x: corner, y: 0), control: CGPoint(x: 0, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX - corner, y: 0))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: corner), control: CGPoint(x: rect.maxX, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 

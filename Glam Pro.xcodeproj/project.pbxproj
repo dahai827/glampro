@@ -8,6 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		005748902356FA3F05915F08 /* CreditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D106AD8F551FB56833394A98 /* CreditView.swift */; };
+		08D488A12A7C4AA8A1E70001 /* StoreKitTransactionObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D488A12A7C4AA8A1E70002 /* StoreKitTransactionObserver.swift */; };
+		0A11B22C33D44E55F6677881 /* Banner Slider_1.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 0A11B22C33D44E55F6677891 /* Banner Slider_1.mp4 */; };
+		0A11B22C33D44E55F6677883 /* Banner Slider_3.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 0A11B22C33D44E55F6677893 /* Banner Slider_3.mp4 */; };
+		0B22C33D44E55F6677889901 /* subscribe_video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 0B22C33D44E55F6677889902 /* subscribe_video.mp4 */; };
+		1C33D44E55F667788990A101 /* features_motion_swap.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 1C33D44E55F667788990A102 /* features_motion_swap.mp4 */; };
+		1C33D44E55F667788990A103 /* features_custom_style.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 1C33D44E55F667788990A104 /* features_custom_style.mp4 */; };
+		1C33D44E55F667788990A105 /* features_shots.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 1C33D44E55F667788990A106 /* features_shots.jpg */; };
 		24ABE4B1AD69727ADB8C4FF4 /* SubscriptionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5D31111BD18D16319F8938 /* SubscriptionViews.swift */; };
 		2573637698805D20712D0201 /* MockData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87537F5E6AF507FDFDEAF287 /* MockData.swift */; };
 		322FA703418D639605FCDF19 /* GlamProTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 520E284CA40328DBA45A5EDE /* GlamProTheme.swift */; };
@@ -37,10 +44,17 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		08D488A12A7C4AA8A1E70002 /* StoreKitTransactionObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitTransactionObserver.swift; sourceTree = "<group>"; };
+		0A11B22C33D44E55F6677891 /* Banner Slider_1.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Banner Slider_1.mp4"; sourceTree = "<group>"; };
+		0A11B22C33D44E55F6677893 /* Banner Slider_3.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Banner Slider_3.mp4"; sourceTree = "<group>"; };
+		0B22C33D44E55F6677889902 /* subscribe_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = subscribe_video.mp4; sourceTree = "<group>"; };
 		0DDEA27807718F1055E35D3C /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		10583B0113C573F4BC54EC1F /* GenerationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationModels.swift; sourceTree = "<group>"; };
 		147EEEB6CFE902B1CFD58BB0 /* FeaturesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturesView.swift; sourceTree = "<group>"; };
 		14BAEA34D600077CC8C61DD7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
+		1C33D44E55F667788990A102 /* features_motion_swap.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = features_motion_swap.mp4; sourceTree = "<group>"; };
+		1C33D44E55F667788990A104 /* features_custom_style.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = features_custom_style.mp4; sourceTree = "<group>"; };
+		1C33D44E55F667788990A106 /* features_shots.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = features_shots.jpg; sourceTree = "<group>"; };
 		1DC672079FCAC06393844F3D /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		1F8A50C1B09B6A990633DB66 /* GenerationProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationProgressView.swift; sourceTree = "<group>"; };
 		520E284CA40328DBA45A5EDE /* GlamProTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlamProTheme.swift; sourceTree = "<group>"; };
@@ -51,7 +65,7 @@
 		9712363323B6462FAACB876D /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		A78A418E2FF634E93BE3E745 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		ADF78E652C58A6F532328E1A /* DailyCheckinStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyCheckinStore.swift; sourceTree = "<group>"; };
-		AF1D7C5BBF9849932CEB01AC /* GlamPro.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GlamPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF1D7C5BBF9849932CEB01AC /* GlamPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GlamPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B498170DD43DF82191FDBEDE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B83A5B849BA43E388ACEC13E /* AppBootstrapStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBootstrapStore.swift; sourceTree = "<group>"; };
 		BA6736849EF858D57AC70D3B /* PreviewGenerationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewGenerationStore.swift; sourceTree = "<group>"; };
@@ -78,9 +92,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0A11B22C33D44E55F6677901 /* Banner Slider */ = {
+			isa = PBXGroup;
+			children = (
+				0A11B22C33D44E55F6677891 /* Banner Slider_1.mp4 */,
+				0A11B22C33D44E55F6677893 /* Banner Slider_3.mp4 */,
+			);
+			path = "Banner Slider";
+			sourceTree = "<group>";
+		};
 		2D34FADC527BB662267B45BD = {
 			isa = PBXGroup;
 			children = (
+				0A11B22C33D44E55F6677901 /* Banner Slider */,
 				FFBB866F3DB596D845F1918C /* GlamPro */,
 				35D98BA4B535199E604B1C43 /* Products */,
 			);
@@ -129,6 +153,11 @@
 				9712363323B6462FAACB876D /* KeychainManager.swift */,
 				87537F5E6AF507FDFDEAF287 /* MockData.swift */,
 				BA6736849EF858D57AC70D3B /* PreviewGenerationStore.swift */,
+				0B22C33D44E55F6677889902 /* subscribe_video.mp4 */,
+				1C33D44E55F667788990A102 /* features_motion_swap.mp4 */,
+				1C33D44E55F667788990A104 /* features_custom_style.mp4 */,
+				1C33D44E55F667788990A106 /* features_shots.jpg */,
+				08D488A12A7C4AA8A1E70002 /* StoreKitTransactionObserver.swift */,
 				A78A418E2FF634E93BE3E745 /* SessionManager.swift */,
 				403DDEB34BB155F7B94FF3B3 /* Views */,
 			);
@@ -166,8 +195,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = 94CE8BD0F3F5E59F1ADFEB85 /* Build configuration list for PBXProject "Glam Pro" */;
 			developmentRegion = en;
@@ -196,6 +223,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0A11B22C33D44E55F6677881 /* Banner Slider_1.mp4 in Resources */,
+				0A11B22C33D44E55F6677883 /* Banner Slider_3.mp4 in Resources */,
+				0B22C33D44E55F6677889901 /* subscribe_video.mp4 in Resources */,
+				1C33D44E55F667788990A101 /* features_motion_swap.mp4 in Resources */,
+				1C33D44E55F667788990A103 /* features_custom_style.mp4 in Resources */,
+				1C33D44E55F667788990A105 /* features_shots.jpg in Resources */,
 				C5A331712D618F6C6F42D856 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -228,6 +261,7 @@
 				8ED06B8E73024CD68BB21359 /* PreviewGenerationStore.swift in Sources */,
 				DFE5AFC19C7ED5C18E4F8B70 /* ProfileView.swift in Sources */,
 				FD2611EEFF3FDEEEEC81A144 /* RootView.swift in Sources */,
+				08D488A12A7C4AA8A1E70001 /* StoreKitTransactionObserver.swift in Sources */,
 				86EB9FE51803A97712D13B05 /* SessionManager.swift in Sources */,
 				24ABE4B1AD69727ADB8C4FF4 /* SubscriptionViews.swift in Sources */,
 				59DBA125BBBC4259F0DCDD1E /* TemplatePreviewView.swift in Sources */,
@@ -242,8 +276,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_LANGUAGE = en;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7638GMP755;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Glam Pro";
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = fb1261567822843388;
@@ -268,7 +307,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.glampro.GlamPro;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liuying.glampro;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = GlamProDev;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -346,8 +388,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_LANGUAGE = en;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7638GMP755;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Glam Pro";
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = fb1261567822843388;
@@ -372,7 +419,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.glampro.GlamPro;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liuying.glampro;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = GlamProDev;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;

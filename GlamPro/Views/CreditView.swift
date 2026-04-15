@@ -39,11 +39,19 @@ struct CreditView: View {
     var body: some View {
         GeometryReader { geometry in
             let safeBottom = geometry.safeAreaInsets.bottom
+            let ctaHeight: CGFloat = 104 + max(safeBottom, 8)
 
             VStack(spacing: 0) {
-                Spacer(minLength: 20)
+                Spacer(minLength: 6)
+                heroSection
+                    .padding(.top, 42)
+                    .padding(.bottom, 6)
 
-                bottomPanel(bottomInset: safeBottom)
+                bottomPanel()
+                    .frame(maxHeight: .infinity)
+
+                ctaBar(bottomInset: safeBottom)
+                    .frame(height: ctaHeight)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
             .background {
@@ -52,10 +60,14 @@ struct CreditView: View {
             .overlay(alignment: .top) {
                 topBar
                     .padding(.horizontal, 16)
-                    .padding(.top, 12)
+                    .padding(.top, 14)
                     .zIndex(2)
             }
         }
+        .highPriorityGesture(
+            DragGesture(minimumDistance: 24)
+                .onEnded(handleGlobalSwipeToPurchase)
+        )
         .task {
             await store.preloadPackagesIfNeeded()
             syncSelectionIfNeeded()
@@ -81,6 +93,27 @@ struct CreditView: View {
         } message: {
             Text(feedbackMessage ?? "")
         }
+    }
+
+    private var heroSection: some View {
+        ZStack(alignment: .bottom) {
+            Image("CreditHero")
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: 356)
+                .clipped()
+
+            LinearGradient(
+                colors: [Color.clear, Color(hex: "0F1A2A").opacity(0.56), Color(hex: "101824")],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 112)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 356)
+        .clipped()
     }
 
     private var backgroundView: some View {
@@ -126,34 +159,24 @@ struct CreditView: View {
                 .contentShape(Rectangle())
 
             Spacer(minLength: 0)
-
-            HStack(spacing: 8) {
-                Image(systemName: "c.circle.fill")
-                    .font(.system(size: 15, weight: .bold))
-                Text("\(sessionManager.creditsBalance)")
-                    .font(.calm(15, weight: .bold))
-            }
-            .foregroundColor(Color(hex: "F5C94F"))
-            .padding(.horizontal, 14)
-            .frame(height: 36)
-            .background(Capsule().fill(Color.black.opacity(0.18)))
-            .overlay(Capsule().stroke(Color.white.opacity(0.08), lineWidth: 1))
         }
         .frame(maxWidth: .infinity)
     }
 
-    private func bottomPanel(bottomInset: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
+    private func bottomPanel() -> some View {
+        VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Buy Coins")
-                    .font(.calm(32, weight: .heavy))
+                Text("Full Glam AI power")
+                    .font(.calm(30, weight: .heavy))
                     .foregroundColor(.white)
 
-                Text("Top up your balance and keep creating without interruption.")
-                    .font(.calm(15, weight: .medium))
+                Text("Choose your pack and swipe up to continue.")
+                    .font(.calm(13, weight: .medium))
                     .foregroundColor(.white.opacity(0.78))
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            Spacer(minLength: 4)
 
             Group {
                 if store.isLoading && store.packages.isEmpty {
@@ -169,17 +192,16 @@ struct CreditView: View {
 
             footerLinks
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 24)
-        .padding(.bottom, max(bottomInset, 10) + 20)
+        .padding(.horizontal, 16)
+        .padding(.top, 20)
+        .padding(.bottom, 14)
         .background(
             RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(Color.black.opacity(0.38))
-                .ignoresSafeArea(edges: .bottom)
+                .fill(Color(hex: "101824").opacity(0.88))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
     }
 
@@ -276,59 +298,25 @@ struct CreditView: View {
     }
 
     private var packsContent: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             ForEach(store.packages) { pack in
                 packCard(pack)
             }
-
-            Button(action: purchaseSelectedPack) {
-                VStack(spacing: 2) {
-                    HStack(spacing: 8) {
-                        if purchaseState != .idle {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .tint(.white)
-                        }
-                        Text(continueButtonTitle)
-                            .font(.calm(18, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-
-                    if let selectedPack {
-                        Text(selectedPack.displayPrice)
-                            .font(.calm(13, weight: .medium))
-                            .foregroundColor(.white.opacity(0.92))
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(canContinue ? GlamProTheme.accentGradient : LinearGradient(colors: [Color.white.opacity(0.16), Color.white.opacity(0.10)], startPoint: .leading, endPoint: .trailing))
-                )
-            }
-            .buttonStyle(.plain)
-            .disabled(!canContinue)
         }
     }
 
     private var footerLinks: some View {
         VStack(spacing: 8) {
-            Text("Consumable purchase. Coins are added to your current balance after verification.")
-                .font(.calm(12, weight: .medium))
-                .foregroundColor(.white.opacity(0.58))
-                .multilineTextAlignment(.center)
-
             HStack(spacing: 12) {
-                Text("Terms")
+                Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                 Text("·")
-                Text("Privacy")
+                Link("Privacy", destination: URL(string: "http://www.streamflowai.store/glampro-privacy-policy.html")!)
             }
             .font(.calm(12, weight: .medium))
             .foregroundColor(.white.opacity(0.52))
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 4)
+        .padding(.top, 2)
     }
 
     private func packCard(_ pack: CreditPack) -> some View {
@@ -338,55 +326,46 @@ struct CreditView: View {
             guard purchaseState == .idle else { return }
             selectedPackID = pack.id
         } label: {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        Text(pack.displayName)
-                            .font(.calm(18, weight: .heavy))
-                            .foregroundColor(.white)
-
-                        if let badge = pack.badgeText {
-                            Text(badge)
-                                .font(.calm(10, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .frame(height: 22)
-                                .background(Capsule().fill(Color(hex: "FF8D5E")))
-                        }
-                    }
-
-                    Text(pack.coinsDescription)
-                        .font(.calm(14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.74))
-                        .multilineTextAlignment(.leading)
-
-                    if pack.bonusCoins > 0 {
-                        Text("+\(pack.bonusCoins) bonus coins")
-                            .font(.calm(13, weight: .bold))
-                            .foregroundColor(Color(hex: "F5C94F"))
-                    }
-                }
-
-                Spacer(minLength: 8)
-
-                VStack(alignment: .trailing, spacing: 6) {
-                    Text(pack.displayPrice)
-                        .font(.calm(22, weight: .heavy))
+            ZStack(alignment: .topTrailing) {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(displayNameText(pack.displayName))
+                        .font(.calm(27, weight: .regular))
                         .foregroundColor(.white)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.76)
+                        .minimumScaleFactor(0.7)
 
-                    Text("\(pack.totalCoins) coins")
-                        .font(.calm(13, weight: .bold))
-                        .foregroundColor(.white.opacity(0.78))
+                    HStack(alignment: .lastTextBaseline, spacing: 8) {
+                        Text(displayPriceText(pack.displayPrice))
+                            .font(.calm(23, weight: .regular))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+
+                        if let original = originalPriceText(for: pack) {
+                            Text(original)
+                                .font(.calm(20, weight: .regular))
+                                .foregroundColor(.white.opacity(0.56))
+                                .strikethrough(true, color: .white.opacity(0.56))
+                                .lineLimit(1)
+                        }
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("Save 50%")
+                    .font(.calm(12, weight: .regular))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .frame(height: 22)
+                    .background(Capsule().fill(Color(hex: "53A8FF")))
+                    .offset(x: -12, y: -11)
             }
             .padding(.horizontal, 18)
-            .padding(.vertical, 18)
+            .padding(.top, 9)
+            .padding(.bottom, 7)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(isSelected ? Color(hex: "2E6FA8").opacity(0.92) : Color.white.opacity(0.10))
+                    .fill(isSelected ? Color(hex: "2E6FA8").opacity(0.95) : Color.white.opacity(0.12))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
@@ -395,6 +374,54 @@ struct CreditView: View {
         }
         .buttonStyle(.plain)
         .disabled(purchaseState != .idle)
+    }
+
+    private func ctaBar(bottomInset: CGFloat) -> some View {
+        ZStack(alignment: .top) {
+            Rectangle()
+                .fill(Color(hex: "101824"))
+                .ignoresSafeArea(edges: .bottom)
+
+            Button(action: purchaseSelectedPack) {
+                VStack(spacing: 3) {
+                    HStack(spacing: 8) {
+                        if purchaseState != .idle {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .tint(.white)
+                        }
+                        Text("Grab the deal")
+                            .font(.calm(22, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+
+                    if purchaseState != .idle {
+                        Text(continueButtonTitle)
+                            .font(.calm(14, weight: .bold))
+                            .foregroundColor(.white.opacity(0.94))
+                    } else if let selectedPack {
+                        Text("\(displayPriceText(selectedPack.displayPrice)) · Swipe up")
+                            .font(.calm(14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.94))
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 64)
+                .background(
+                    RoundedRectangle(cornerRadius: 29, style: .continuous)
+                        .fill(canContinue ? GlamProTheme.accentGradient : LinearGradient(colors: [Color.white.opacity(0.16), Color.white.opacity(0.10)], startPoint: .leading, endPoint: .trailing))
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(!canContinue)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+        }
+        .padding(.bottom, max(bottomInset, 8))
+        .overlay(
+            Rectangle()
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
     }
 
     private func syncSelectionIfNeeded() {
@@ -427,6 +454,41 @@ struct CreditView: View {
                 feedbackMessage = error.localizedDescription
             }
         }
+    }
+
+    private func handleGlobalSwipeToPurchase(_ value: DragGesture.Value) {
+        guard canContinue else { return }
+        let vertical = value.translation.height
+        let horizontal = value.translation.width
+        guard vertical < -90 else { return }
+        guard abs(vertical) > (abs(horizontal) * 1.3) else { return }
+        purchaseSelectedPack()
+    }
+
+    private func originalPriceText(for pack: CreditPack) -> String? {
+        guard let amount = pack.amount, amount > 0 else { return nil }
+        let originalAmount = amount * 2
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = (pack.currencyCode ?? "USD").uppercased()
+        formatter.maximumFractionDigits = originalAmount.rounded() == originalAmount ? 0 : 2
+        formatter.minimumFractionDigits = originalAmount.rounded() == originalAmount ? 0 : 2
+        guard let raw = formatter.string(from: NSNumber(value: originalAmount)) else { return nil }
+        return displayPriceText(raw)
+    }
+
+    private func displayPriceText(_ raw: String) -> String {
+        raw.replacingOccurrences(of: "US$", with: "$")
+            .replacingOccurrences(of: "US", with: "")
+    }
+
+    private func displayNameText(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lower = trimmed.lowercased()
+        guard lower.hasPrefix("glampro") else { return trimmed }
+
+        let suffix = trimmed.dropFirst("glampro".count).trimmingCharacters(in: .whitespacesAndNewlines)
+        return suffix.isEmpty ? trimmed : suffix
     }
 }
 
@@ -578,6 +640,11 @@ final class CreditPurchaseStore: ObservableObject {
     private let apiClient: APIClient
     private let userDefaults: UserDefaults
     private let cacheKey = "glampro.credit_packs.cache"
+    private let preferredProductIDs = [
+        "glampro500coinspack",
+        "glampro1700coinspack",
+        "glampro6500coinspack"
+    ]
     private var didLoadOnce = false
     private var productsByID: [String: Product] = [:]
 
@@ -611,7 +678,8 @@ final class CreditPurchaseStore: ObservableObject {
                 ]
             )
 
-            let configs = (response.data ?? []).filter { !$0.productID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            let apiConfigs = (response.data ?? []).filter { !$0.productID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            let configs = resolveConfigurations(apiConfigs: apiConfigs)
             if configs.isEmpty {
                 if packages.isEmpty {
                     packages = []
@@ -687,6 +755,18 @@ final class CreditPurchaseStore: ObservableObject {
         }
     }
 
+    func handleTransactionUpdate(
+        _ verification: VerificationResult<StoreKit.Transaction>,
+        sessionManager: SessionManager
+    ) async {
+        do {
+            try await verifyCreditPurchase(verification: verification, sessionManager: sessionManager)
+            print("[StoreKit][Credits] handled transaction update")
+        } catch {
+            print("[StoreKit][Credits] transaction update handling failed: \(error.localizedDescription)")
+        }
+    }
+
     private func verifyCreditPurchase(
         verification: VerificationResult<StoreKit.Transaction>,
         sessionManager: SessionManager
@@ -743,6 +823,79 @@ final class CreditPurchaseStore: ObservableObject {
             tags: config.tags ?? [],
             sortOrder: config.sortOrder ?? .max
         )
+    }
+
+    private func resolveConfigurations(apiConfigs: [CreditPackConfiguration]) -> [CreditPackConfiguration] {
+        if apiConfigs.isEmpty {
+            return fallbackConfigurations()
+        }
+
+        let fallbackByID = Dictionary(uniqueKeysWithValues: fallbackConfigurations().map { ($0.productID, $0) })
+        let apiByID = Dictionary(uniqueKeysWithValues: apiConfigs.map { ($0.productID, $0) })
+
+        var resolved: [CreditPackConfiguration] = []
+
+        for (index, productID) in preferredProductIDs.enumerated() {
+            if let apiConfig = apiByID[productID] {
+                resolved.append(apiConfig.withSortOrder(index))
+            } else if let fallbackConfig = fallbackByID[productID] {
+                resolved.append(fallbackConfig.withSortOrder(index))
+            }
+        }
+
+        let otherAPIConfigs = apiConfigs
+            .filter { !preferredProductIDs.contains($0.productID) }
+            .sorted { ($0.sortOrder ?? .max, $0.displayName ?? "") < ($1.sortOrder ?? .max, $1.displayName ?? "") }
+        resolved.append(contentsOf: otherAPIConfigs)
+
+        return resolved.isEmpty ? fallbackConfigurations() : resolved
+    }
+
+    private func fallbackConfigurations() -> [CreditPackConfiguration] {
+        [
+            CreditPackConfiguration(
+                id: "fallback.glampro500coinspack",
+                productID: "glampro500coinspack",
+                displayName: "glampro 500 coins pack",
+                description: "Add 500 coins to your balance.",
+                amount: 14.99,
+                currency: "USD",
+                baseCoins: 500,
+                bonusPercentage: 0,
+                bonusCoins: 0,
+                totalCoins: 500,
+                tags: [],
+                sortOrder: 0
+            ),
+            CreditPackConfiguration(
+                id: "fallback.glampro1700coinspack",
+                productID: "glampro1700coinspack",
+                displayName: "glampro 1700 coins pack",
+                description: "Add 1700 coins to your balance.",
+                amount: 29.99,
+                currency: "USD",
+                baseCoins: 1700,
+                bonusPercentage: 0,
+                bonusCoins: 0,
+                totalCoins: 1700,
+                tags: ["Popular"],
+                sortOrder: 1
+            ),
+            CreditPackConfiguration(
+                id: "fallback.glampro6500coinspack",
+                productID: "glampro6500coinspack",
+                displayName: "glampro 6500 coins pack",
+                description: "Add 6500 coins to your balance.",
+                amount: 69.99,
+                currency: "USD",
+                baseCoins: 6500,
+                bonusPercentage: 0,
+                bonusCoins: 0,
+                totalCoins: 6500,
+                tags: ["Best"],
+                sortOrder: 2
+            )
+        ]
     }
 
     private func loadCachedPackages() {
@@ -802,5 +955,52 @@ private extension KeyedDecodingContainer {
             return Int(doubleValue)
         }
         return nil
+    }
+}
+
+private extension CreditPackConfiguration {
+    init(
+        id: String,
+        productID: String,
+        displayName: String?,
+        description: String?,
+        amount: Double?,
+        currency: String?,
+        baseCoins: Int?,
+        bonusPercentage: Int?,
+        bonusCoins: Int?,
+        totalCoins: Int?,
+        tags: [String]?,
+        sortOrder: Int?
+    ) {
+        self.id = id
+        self.productID = productID
+        self.displayName = displayName
+        self.description = description
+        self.amount = amount
+        self.currency = currency
+        self.baseCoins = baseCoins
+        self.bonusPercentage = bonusPercentage
+        self.bonusCoins = bonusCoins
+        self.totalCoins = totalCoins
+        self.tags = tags
+        self.sortOrder = sortOrder
+    }
+
+    func withSortOrder(_ sortOrder: Int) -> CreditPackConfiguration {
+        CreditPackConfiguration(
+            id: id,
+            productID: productID,
+            displayName: displayName,
+            description: description,
+            amount: amount,
+            currency: currency,
+            baseCoins: baseCoins,
+            bonusPercentage: bonusPercentage,
+            bonusCoins: bonusCoins,
+            totalCoins: totalCoins,
+            tags: tags,
+            sortOrder: sortOrder
+        )
     }
 }
