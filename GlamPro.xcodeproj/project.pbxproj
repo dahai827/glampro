@@ -1,0 +1,535 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		005748902356FA3F05915F08 /* CreditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D106AD8F551FB56833394A98 /* CreditView.swift */; };
+		08D488A12A7C4AA8A1E70001 /* StoreKitTransactionObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D488A12A7C4AA8A1E70002 /* StoreKitTransactionObserver.swift */; };
+		0A11B22C33D44E55F6677881 /* Banner Slider_1.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 0A11B22C33D44E55F6677891 /* Banner Slider_1.mp4 */; };
+		0A11B22C33D44E55F6677883 /* Banner Slider_3.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 0A11B22C33D44E55F6677893 /* Banner Slider_3.mp4 */; };
+		0B22C33D44E55F6677889901 /* subscribe_video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 0B22C33D44E55F6677889902 /* subscribe_video.mp4 */; };
+		1C33D44E55F667788990A101 /* features_motion_swap.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 1C33D44E55F667788990A102 /* features_motion_swap.mp4 */; };
+		1C33D44E55F667788990A103 /* features_custom_style.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 1C33D44E55F667788990A104 /* features_custom_style.mp4 */; };
+		1C33D44E55F667788990A105 /* features_shots.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 1C33D44E55F667788990A106 /* features_shots.jpg */; };
+		24ABE4B1AD69727ADB8C4FF4 /* SubscriptionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5D31111BD18D16319F8938 /* SubscriptionViews.swift */; };
+		2573637698805D20712D0201 /* MockData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87537F5E6AF507FDFDEAF287 /* MockData.swift */; };
+		322FA703418D639605FCDF19 /* GlamProTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 520E284CA40328DBA45A5EDE /* GlamProTheme.swift */; };
+		39EF9DAA10C9E547A2AFE394 /* DailyCheckinStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADF78E652C58A6F532328E1A /* DailyCheckinStore.swift */; };
+		3B0D9583490F82720CB7FBD6 /* FeaturesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 147EEEB6CFE902B1CFD58BB0 /* FeaturesView.swift */; };
+		40536163FCA34ACB3EAD8E79 /* GlamProApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B128C3169AA72CC16611252 /* GlamProApp.swift */; };
+		4E6EA9858DF96B9F25DCFE6D /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29CCAEA19BACBC780983B76 /* FeedView.swift */; };
+		553B43CB1F6C4139640923D6 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7807C9A9DE26318EAF1057 /* AppState.swift */; };
+		59DBA125BBBC4259F0DCDD1E /* TemplatePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E32E7CB5928023EE54B1B833 /* TemplatePreviewView.swift */; };
+		625084485E27F136FA9FD677 /* AppBootstrapStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83A5B849BA43E388ACEC13E /* AppBootstrapStore.swift */; };
+		665539C30DD9853F6A1AD71C /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672C8C4FA5589DF2C6467ECA /* CommonViews.swift */; };
+		687C55BA7F08ED23C1490752 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9712363323B6462FAACB876D /* KeychainManager.swift */; };
+		6AB586C6DF0A2038156C833C /* GenerationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10583B0113C573F4BC54EC1F /* GenerationModels.swift */; };
+		743CA69BC17A7DD873D34AFB /* UploadPhotosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D15E203F8B0CBF4A3280403 /* UploadPhotosView.swift */; };
+		86EB9FE51803A97712D13B05 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78A418E2FF634E93BE3E745 /* SessionManager.swift */; };
+		8ED06B8E73024CD68BB21359 /* PreviewGenerationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6736849EF858D57AC70D3B /* PreviewGenerationStore.swift */; };
+		996E4E752BAFC98154FB9BB4 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DDEA27807718F1055E35D3C /* APIClient.swift */; };
+		997EF95ED0C5DE94118288F9 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C727E8DEBCEEEC728DF31D48 /* HomeView.swift */; };
+		9C4E92278BA8E6B854D6B885 /* GenerationProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F8A50C1B09B6A990633DB66 /* GenerationProgressView.swift */; };
+		A086755A6CAACAD430E85F46 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BAEA34D600077CC8C61DD7 /* APIModels.swift */; };
+		A6F0C6F2880780A4C4580328 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 453DAF8E1760965DD2329288 /* FacebookCore */; };
+		A7A878D1A023574D19C1D008 /* FacebookAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEDE240BA449188BE4B09D13 /* FacebookAnalyticsService.swift */; };
+		C5A331712D618F6C6F42D856 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B498170DD43DF82191FDBEDE /* Assets.xcassets */; };
+		D98C4525DF6BD9771C18AE1C /* GenerationResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD3856F5969FEC7D13C41AB /* GenerationResultView.swift */; };
+		DFE5AFC19C7ED5C18E4F8B70 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC672079FCAC06393844F3D /* ProfileView.swift */; };
+		FD2611EEFF3FDEEEEC81A144 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40D5E99E5615E8D3B3A06A6 /* RootView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		08D488A12A7C4AA8A1E70002 /* StoreKitTransactionObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitTransactionObserver.swift; sourceTree = "<group>"; };
+		0A11B22C33D44E55F6677891 /* Banner Slider_1.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Banner Slider_1.mp4"; sourceTree = "<group>"; };
+		0A11B22C33D44E55F6677893 /* Banner Slider_3.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Banner Slider_3.mp4"; sourceTree = "<group>"; };
+		0B22C33D44E55F6677889902 /* subscribe_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = subscribe_video.mp4; sourceTree = "<group>"; };
+		0DDEA27807718F1055E35D3C /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		10583B0113C573F4BC54EC1F /* GenerationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationModels.swift; sourceTree = "<group>"; };
+		147EEEB6CFE902B1CFD58BB0 /* FeaturesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturesView.swift; sourceTree = "<group>"; };
+		14BAEA34D600077CC8C61DD7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
+		1C33D44E55F667788990A102 /* features_motion_swap.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = features_motion_swap.mp4; sourceTree = "<group>"; };
+		1C33D44E55F667788990A104 /* features_custom_style.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = features_custom_style.mp4; sourceTree = "<group>"; };
+		1C33D44E55F667788990A106 /* features_shots.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = features_shots.jpg; sourceTree = "<group>"; };
+		1DC672079FCAC06393844F3D /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		1F8A50C1B09B6A990633DB66 /* GenerationProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationProgressView.swift; sourceTree = "<group>"; };
+		520E284CA40328DBA45A5EDE /* GlamProTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlamProTheme.swift; sourceTree = "<group>"; };
+		672C8C4FA5589DF2C6467ECA /* CommonViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonViews.swift; sourceTree = "<group>"; };
+		6D15E203F8B0CBF4A3280403 /* UploadPhotosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadPhotosView.swift; sourceTree = "<group>"; };
+		7B128C3169AA72CC16611252 /* GlamProApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlamProApp.swift; sourceTree = "<group>"; };
+		87537F5E6AF507FDFDEAF287 /* MockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockData.swift; sourceTree = "<group>"; };
+		9712363323B6462FAACB876D /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
+		A78A418E2FF634E93BE3E745 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		ADF78E652C58A6F532328E1A /* DailyCheckinStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyCheckinStore.swift; sourceTree = "<group>"; };
+		AF1D7C5BBF9849932CEB01AC /* GlamPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GlamPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B498170DD43DF82191FDBEDE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B83A5B849BA43E388ACEC13E /* AppBootstrapStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBootstrapStore.swift; sourceTree = "<group>"; };
+		BA6736849EF858D57AC70D3B /* PreviewGenerationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewGenerationStore.swift; sourceTree = "<group>"; };
+		C727E8DEBCEEEC728DF31D48 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		CB5D31111BD18D16319F8938 /* SubscriptionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionViews.swift; sourceTree = "<group>"; };
+		D106AD8F551FB56833394A98 /* CreditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditView.swift; sourceTree = "<group>"; };
+		E32E7CB5928023EE54B1B833 /* TemplatePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePreviewView.swift; sourceTree = "<group>"; };
+		E40D5E99E5615E8D3B3A06A6 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		F29CCAEA19BACBC780983B76 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
+		FBD3856F5969FEC7D13C41AB /* GenerationResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationResultView.swift; sourceTree = "<group>"; };
+		FEDE240BA449188BE4B09D13 /* FacebookAnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FacebookAnalyticsService.swift; sourceTree = "<group>"; };
+		FF7807C9A9DE26318EAF1057 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4008B8472DB70BE3C24460E8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6F0C6F2880780A4C4580328 /* FacebookCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A11B22C33D44E55F6677901 /* Banner Slider */ = {
+			isa = PBXGroup;
+			children = (
+				0A11B22C33D44E55F6677891 /* Banner Slider_1.mp4 */,
+				0A11B22C33D44E55F6677893 /* Banner Slider_3.mp4 */,
+			);
+			path = "Banner Slider";
+			sourceTree = "<group>";
+		};
+		2D34FADC527BB662267B45BD = {
+			isa = PBXGroup;
+			children = (
+				0A11B22C33D44E55F6677901 /* Banner Slider */,
+				FFBB866F3DB596D845F1918C /* GlamPro */,
+				35D98BA4B535199E604B1C43 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		35D98BA4B535199E604B1C43 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AF1D7C5BBF9849932CEB01AC /* GlamPro.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		403DDEB34BB155F7B94FF3B3 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				672C8C4FA5589DF2C6467ECA /* CommonViews.swift */,
+				D106AD8F551FB56833394A98 /* CreditView.swift */,
+				147EEEB6CFE902B1CFD58BB0 /* FeaturesView.swift */,
+				F29CCAEA19BACBC780983B76 /* FeedView.swift */,
+				1F8A50C1B09B6A990633DB66 /* GenerationProgressView.swift */,
+				FBD3856F5969FEC7D13C41AB /* GenerationResultView.swift */,
+				C727E8DEBCEEEC728DF31D48 /* HomeView.swift */,
+				1DC672079FCAC06393844F3D /* ProfileView.swift */,
+				E40D5E99E5615E8D3B3A06A6 /* RootView.swift */,
+				CB5D31111BD18D16319F8938 /* SubscriptionViews.swift */,
+				E32E7CB5928023EE54B1B833 /* TemplatePreviewView.swift */,
+				6D15E203F8B0CBF4A3280403 /* UploadPhotosView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FFBB866F3DB596D845F1918C /* GlamPro */ = {
+			isa = PBXGroup;
+			children = (
+				0DDEA27807718F1055E35D3C /* APIClient.swift */,
+				14BAEA34D600077CC8C61DD7 /* APIModels.swift */,
+				B83A5B849BA43E388ACEC13E /* AppBootstrapStore.swift */,
+				FF7807C9A9DE26318EAF1057 /* AppState.swift */,
+				B498170DD43DF82191FDBEDE /* Assets.xcassets */,
+				ADF78E652C58A6F532328E1A /* DailyCheckinStore.swift */,
+				FEDE240BA449188BE4B09D13 /* FacebookAnalyticsService.swift */,
+				10583B0113C573F4BC54EC1F /* GenerationModels.swift */,
+				7B128C3169AA72CC16611252 /* GlamProApp.swift */,
+				520E284CA40328DBA45A5EDE /* GlamProTheme.swift */,
+				9712363323B6462FAACB876D /* KeychainManager.swift */,
+				87537F5E6AF507FDFDEAF287 /* MockData.swift */,
+				BA6736849EF858D57AC70D3B /* PreviewGenerationStore.swift */,
+				0B22C33D44E55F6677889902 /* subscribe_video.mp4 */,
+				1C33D44E55F667788990A102 /* features_motion_swap.mp4 */,
+				1C33D44E55F667788990A104 /* features_custom_style.mp4 */,
+				1C33D44E55F667788990A106 /* features_shots.jpg */,
+				08D488A12A7C4AA8A1E70002 /* StoreKitTransactionObserver.swift */,
+				A78A418E2FF634E93BE3E745 /* SessionManager.swift */,
+				403DDEB34BB155F7B94FF3B3 /* Views */,
+			);
+			path = GlamPro;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		EB02A2F7AC4C2286A0763F0E /* GlamPro */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC6F228C8CC3064588F20346 /* Build configuration list for PBXNativeTarget "GlamPro" */;
+			buildPhases = (
+				126261C9CF14781AC57CEE05 /* Sources */,
+				B8CB712BE353083470112518 /* Resources */,
+				4008B8472DB70BE3C24460E8 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GlamPro;
+			packageProductDependencies = (
+				453DAF8E1760965DD2329288 /* FacebookCore */,
+			);
+			productName = GlamPro;
+			productReference = AF1D7C5BBF9849932CEB01AC /* GlamPro.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7F1D0D8DB87D2C983B967A0A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = 94CE8BD0F3F5E59F1ADFEB85 /* Build configuration list for PBXProject "Glam Pro" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 2D34FADC527BB662267B45BD;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				880F7792D0945FF46D9D45D0 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 35D98BA4B535199E604B1C43 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EB02A2F7AC4C2286A0763F0E /* GlamPro */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B8CB712BE353083470112518 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A11B22C33D44E55F6677881 /* Banner Slider_1.mp4 in Resources */,
+				0A11B22C33D44E55F6677883 /* Banner Slider_3.mp4 in Resources */,
+				0B22C33D44E55F6677889901 /* subscribe_video.mp4 in Resources */,
+				1C33D44E55F667788990A101 /* features_motion_swap.mp4 in Resources */,
+				1C33D44E55F667788990A103 /* features_custom_style.mp4 in Resources */,
+				1C33D44E55F667788990A105 /* features_shots.jpg in Resources */,
+				C5A331712D618F6C6F42D856 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		126261C9CF14781AC57CEE05 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				996E4E752BAFC98154FB9BB4 /* APIClient.swift in Sources */,
+				A086755A6CAACAD430E85F46 /* APIModels.swift in Sources */,
+				625084485E27F136FA9FD677 /* AppBootstrapStore.swift in Sources */,
+				553B43CB1F6C4139640923D6 /* AppState.swift in Sources */,
+				665539C30DD9853F6A1AD71C /* CommonViews.swift in Sources */,
+				005748902356FA3F05915F08 /* CreditView.swift in Sources */,
+				39EF9DAA10C9E547A2AFE394 /* DailyCheckinStore.swift in Sources */,
+				A7A878D1A023574D19C1D008 /* FacebookAnalyticsService.swift in Sources */,
+				3B0D9583490F82720CB7FBD6 /* FeaturesView.swift in Sources */,
+				4E6EA9858DF96B9F25DCFE6D /* FeedView.swift in Sources */,
+				6AB586C6DF0A2038156C833C /* GenerationModels.swift in Sources */,
+				9C4E92278BA8E6B854D6B885 /* GenerationProgressView.swift in Sources */,
+				D98C4525DF6BD9771C18AE1C /* GenerationResultView.swift in Sources */,
+				40536163FCA34ACB3EAD8E79 /* GlamProApp.swift in Sources */,
+				322FA703418D639605FCDF19 /* GlamProTheme.swift in Sources */,
+				997EF95ED0C5DE94118288F9 /* HomeView.swift in Sources */,
+				687C55BA7F08ED23C1490752 /* KeychainManager.swift in Sources */,
+				2573637698805D20712D0201 /* MockData.swift in Sources */,
+				8ED06B8E73024CD68BB21359 /* PreviewGenerationStore.swift in Sources */,
+				DFE5AFC19C7ED5C18E4F8B70 /* ProfileView.swift in Sources */,
+				FD2611EEFF3FDEEEEC81A144 /* RootView.swift in Sources */,
+				08D488A12A7C4AA8A1E70001 /* StoreKitTransactionObserver.swift in Sources */,
+				86EB9FE51803A97712D13B05 /* SessionManager.swift in Sources */,
+				24ABE4B1AD69727ADB8C4FF4 /* SubscriptionViews.swift in Sources */,
+				59DBA125BBBC4259F0DCDD1E /* TemplatePreviewView.swift in Sources */,
+				743CA69BC17A7DD873D34AFB /* UploadPhotosView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0FBBF7A97AEB68069363D281 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = en;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7638GMP755;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = GlamPro;
+				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = fb1261567822843388;
+				INFOPLIST_KEY_FacebookAdvertiserIDCollectionEnabled = YES;
+				INFOPLIST_KEY_FacebookAppID = 1261567822843388;
+				INFOPLIST_KEY_FacebookAutoLogAppEventsEnabled = YES;
+				INFOPLIST_KEY_FacebookClientToken = 7f8164762043d79e0107d264ad591677;
+				INFOPLIST_KEY_FacebookDisplayName = "Glam pro";
+				INFOPLIST_KEY_LSApplicationQueriesSchemes_0 = fbapi;
+				INFOPLIST_KEY_LSApplicationQueriesSchemes_1 = "fb-messenger-share-api";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Use the camera to capture your source photo for AI generation.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow Glam Pro to save generated images and videos to your Photos.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Use your photo library to choose source images for AI generation.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "Your data will be used to deliver personalized ads to you.";
+				INFOPLIST_KEY_SKIncludeConsumableInAppPurchaseHistory = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liuying.glampro;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = GlamProPro;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		67DA707FA8D95410AA14CD52 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9EEF54AEFC08944DCFCE867D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = en;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7638GMP755;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = GlamPro;
+				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = fb1261567822843388;
+				INFOPLIST_KEY_FacebookAdvertiserIDCollectionEnabled = YES;
+				INFOPLIST_KEY_FacebookAppID = 1261567822843388;
+				INFOPLIST_KEY_FacebookAutoLogAppEventsEnabled = YES;
+				INFOPLIST_KEY_FacebookClientToken = 7f8164762043d79e0107d264ad591677;
+				INFOPLIST_KEY_FacebookDisplayName = "Glam pro";
+				INFOPLIST_KEY_LSApplicationQueriesSchemes_0 = fbapi;
+				INFOPLIST_KEY_LSApplicationQueriesSchemes_1 = "fb-messenger-share-api";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Use the camera to capture your source photo for AI generation.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow Glam Pro to save generated images and videos to your Photos.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Use your photo library to choose source images for AI generation.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "Your data will be used to deliver personalized ads to you.";
+				INFOPLIST_KEY_SKIncludeConsumableInAppPurchaseHistory = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liuying.glampro;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = GlamProDev;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		EBBCBD43A0D3F0C85F884817 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		94CE8BD0F3F5E59F1ADFEB85 /* Build configuration list for PBXProject "Glam Pro" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67DA707FA8D95410AA14CD52 /* Debug */,
+				EBBCBD43A0D3F0C85F884817 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AC6F228C8CC3064588F20346 /* Build configuration list for PBXNativeTarget "GlamPro" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9EEF54AEFC08944DCFCE867D /* Debug */,
+				0FBBF7A97AEB68069363D281 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		880F7792D0945FF46D9D45D0 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/facebook/facebook-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 18.0.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		453DAF8E1760965DD2329288 /* FacebookCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 880F7792D0945FF46D9D45D0 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 7F1D0D8DB87D2C983B967A0A /* Project object */;
+}
