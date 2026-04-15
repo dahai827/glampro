@@ -284,7 +284,7 @@
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7638GMP755;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Glam Pro";
+				INFOPLIST_KEY_CFBundleDisplayName = GlamPro;
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = fb1261567822843388;
 				INFOPLIST_KEY_FacebookAdvertiserIDCollectionEnabled = YES;
 				INFOPLIST_KEY_FacebookAppID = 1261567822843388;
@@ -396,7 +396,7 @@
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 7638GMP755;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Glam Pro";
+				INFOPLIST_KEY_CFBundleDisplayName = GlamPro;
 				INFOPLIST_KEY_CFBundleURLTypes_0_CFBundleURLSchemes_0 = fb1261567822843388;
 				INFOPLIST_KEY_FacebookAdvertiserIDCollectionEnabled = YES;
 				INFOPLIST_KEY_FacebookAppID = 1261567822843388;
