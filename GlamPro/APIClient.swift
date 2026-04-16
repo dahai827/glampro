@@ -1,8 +1,8 @@
 import Foundation
 
 enum APIConfig {
-    static let baseURL = URL(string: "https://lrenlgqppvqfbibxppbi.supabase.co/functions/v1")!
-    static let supabaseURL = URL(string: "https://lrenlgqppvqfbibxppbi.supabase.co")!
+    static let baseURL = URL(string: "https://api.streamflowai.store/functions/v1")!
+    static let supabaseURL = URL(string: "https://api.streamflowai.store")!
     static let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZW5sZ3FwcHZxZmJpYnhwcGJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MTIxODMsImV4cCI6MjA3ODA4ODE4M30.xVbKv4Es1sZRtWYsqbcu4eBoL1XZlMcyLcEJTTpddP4"
     static let appID = "glampro"
     static let defaultPageType = "default"

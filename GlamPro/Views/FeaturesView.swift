@@ -337,6 +337,7 @@ private final class LocalLoopingVideoPlayerContainerView: UIView {
 }
 
 struct AIChatView: View {
+    @EnvironmentObject private var appBootstrap: AppBootstrapStore
     @EnvironmentObject private var sessionManager: SessionManager
 
     @State private var inputText = ""
@@ -354,6 +355,8 @@ struct AIChatView: View {
     @State private var downloadingMessageIDs: Set<UUID> = []
 
     let onClose: () -> Void
+    let onRequireSubscription: () -> Void
+    let onInsufficientCredits: () -> Void
 
     private let pageHorizontalPadding: CGFloat = 15
     private let inputPanelHorizontalPadding: CGFloat = 10
@@ -615,6 +618,16 @@ struct AIChatView: View {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var requiredCredits: Int {
+        if let dynamic = appBootstrap.featureCards.first(where: { item in
+            let title = item.title.lowercased()
+            return title.contains("ai chat")
+        })?.estimatedCredits, dynamic > 0 {
+            return dynamic
+        }
+        return 1
+    }
+
     private var chatHistory: some View {
         ScrollView {
             VStack(spacing: 10) {
@@ -727,6 +740,14 @@ struct AIChatView: View {
         let prompt = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty else {
             alertItem = FeatureAlertItem(title: "Prompt Required", message: "Please enter a prompt before sending.")
+            return
+        }
+        guard sessionManager.isPro else {
+            onRequireSubscription()
+            return
+        }
+        guard sessionManager.creditsBalance >= requiredCredits else {
+            onInsufficientCredits()
             return
         }
 
@@ -916,6 +937,7 @@ private extension View {
 
 struct CustomStylesView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var appBootstrap: AppBootstrapStore
     @EnvironmentObject private var sessionManager: SessionManager
     @EnvironmentObject private var previewGenerationStore: PreviewGenerationStore
 
@@ -929,6 +951,8 @@ struct CustomStylesView: View {
     @State private var alertItem: FeatureAlertItem?
 
     let onClose: () -> Void
+    let onRequireSubscription: () -> Void
+    let onInsufficientCredits: () -> Void
 
     private let pageHorizontalPadding: CGFloat = 15
 
@@ -1160,6 +1184,16 @@ struct CustomStylesView: View {
         (hasRequiredInputsForCustomStyles || submitStage != .idle) ? Color.black.opacity(0.86) : Color.white.opacity(0.42)
     }
 
+    private var requiredCredits: Int {
+        if let dynamic = appBootstrap.featureCards.first(where: { item in
+            let title = item.title.lowercased()
+            return title.contains("custom style")
+        })?.estimatedCredits, dynamic > 0 {
+            return dynamic
+        }
+        return 1
+    }
+
     private func submitCustomStyles() async {
         let prompt = promptText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty else {
@@ -1168,6 +1202,14 @@ struct CustomStylesView: View {
         }
         guard let selectedMediaForSubmit = selectedMediaAsset else {
             alertItem = FeatureAlertItem(title: "Image Required", message: "Please upload an image or video first.")
+            return
+        }
+        guard sessionManager.isPro else {
+            onRequireSubscription()
+            return
+        }
+        guard sessionManager.creditsBalance >= requiredCredits else {
+            onInsufficientCredits()
             return
         }
 
@@ -1209,7 +1251,7 @@ struct CustomStylesView: View {
                 title: "Custom Styles",
                 modelType: "image_to_image",
                 prompt: prompt,
-                estimatedCredits: 1
+                estimatedCredits: requiredCredits
             ) else {
                 throw APIError.missingData
             }
@@ -1266,6 +1308,8 @@ struct MotionSwapView: View {
     @State private var alertItem: FeatureAlertItem?
 
     let onClose: () -> Void
+    let onRequireSubscription: () -> Void
+    let onInsufficientCredits: () -> Void
 
     private let pageHorizontalPadding: CGFloat = 15
 
@@ -1587,6 +1631,14 @@ struct MotionSwapView: View {
         guard let selectedImageAsset, let selectedVideoAssetURL else {
             print("[MotionSwap] submit blocked: missing image or video")
             alertItem = FeatureAlertItem(title: "Media Required", message: "Please upload both character image and motion video.")
+            return
+        }
+        guard sessionManager.isPro else {
+            onRequireSubscription()
+            return
+        }
+        guard sessionManager.creditsBalance >= requiredCoins else {
+            onInsufficientCredits()
             return
         }
 

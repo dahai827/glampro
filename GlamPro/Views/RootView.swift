@@ -190,11 +190,23 @@ struct RootView: View {
         case .profile:
             ProfileView(onClose: appState.dismissRoute)
         case .aiChat:
-            AIChatView(onClose: appState.dismissRoute)
+            AIChatView(
+                onClose: appState.dismissRoute,
+                onRequireSubscription: { appState.open(.subscriptionTwo) },
+                onInsufficientCredits: { appState.open(.credits) }
+            )
         case .customStyles:
-            CustomStylesView(onClose: appState.dismissRoute)
+            CustomStylesView(
+                onClose: appState.dismissRoute,
+                onRequireSubscription: { appState.open(.subscriptionTwo) },
+                onInsufficientCredits: { appState.open(.credits) }
+            )
         case .motionSwap:
-            MotionSwapView(onClose: appState.dismissRoute)
+            MotionSwapView(
+                onClose: appState.dismissRoute,
+                onRequireSubscription: { appState.open(.subscriptionTwo) },
+                onInsufficientCredits: { appState.open(.credits) }
+            )
         case .uploadPhotos:
             UploadPhotosView(
                 onClose: appState.dismissRoute,
