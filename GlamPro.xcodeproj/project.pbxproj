@@ -196,7 +196,7 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 			};
-			buildConfigurationList = 94CE8BD0F3F5E59F1ADFEB85 /* Build configuration list for PBXProject "Glam Pro" */;
+			buildConfigurationList = 94CE8BD0F3F5E59F1ADFEB85 /* Build configuration list for PBXProject "GlamPro" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -492,7 +492,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		94CE8BD0F3F5E59F1ADFEB85 /* Build configuration list for PBXProject "Glam Pro" */ = {
+		94CE8BD0F3F5E59F1ADFEB85 /* Build configuration list for PBXProject "GlamPro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				67DA707FA8D95410AA14CD52 /* Debug */,

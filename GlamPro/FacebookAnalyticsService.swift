@@ -13,11 +13,17 @@ final class FacebookAnalyticsService {
     private let facebookClientTokenKey = "FacebookClientToken"
     private let registrationPendingUserIDsKey = "facebook.completedRegistration.pendingUserIDs"
     private let registrationLoggedUserIDsKey = "facebook.completedRegistration.loggedUserIDs"
+    private let firstSubscribeLoggedKey = "facebook.subscribe.firstLogged"
     private let userDefaults: UserDefaults
+    private let keychain: KeychainManager
     private(set) var isInitialized = false
 
-    private init(userDefaults: UserDefaults = .standard) {
+    private init(
+        userDefaults: UserDefaults = .standard,
+        keychain: KeychainManager = KeychainManager()
+    ) {
         self.userDefaults = userDefaults
+        self.keychain = keychain
     }
 
     func initializeIfNeeded() {
@@ -41,7 +47,8 @@ final class FacebookAnalyticsService {
         let status = ATTrackingManager.trackingAuthorizationStatus
         let isAuthorized = status == .authorized
 
-        Settings.shared.isAutoLogAppEventsEnabled = true
+        userDefaults.set(false, forKey: "FacebookAutoLogAppEventsEnabled")
+        Settings.shared.isAutoLogAppEventsEnabled = false
         Settings.shared.isAdvertiserIDCollectionEnabled = isAuthorized
         Settings.shared.isAdvertiserTrackingEnabled = isAuthorized
 
@@ -99,6 +106,10 @@ final class FacebookAnalyticsService {
 
     func logSubscribe(planID: String, value: Double?, currency: String = "USD") {
         guard isInitialized else { return }
+        guard !hasLoggedFirstSubscribe else {
+            print("[Facebook] skip event=Subscribe (first_subscribe_already_logged), planID=\(planID)")
+            return
+        }
 
         var parameters: [AppEvents.ParameterName: Any] = [
             .contentID: planID,
@@ -114,8 +125,13 @@ final class FacebookAnalyticsService {
             AppEvents.shared.logEvent(AppEvents.Name("Subscribe"), parameters: parameters)
         }
         AppEvents.shared.flush()
+        keychain.set("1", for: firstSubscribeLoggedKey)
         print("[Facebook] logged event=Subscribe, planID=\(planID), value=\(value?.description ?? "nil"), currency=\(currency), params=\(parameters)")
         print("[Facebook] flush (reason=subscribe)")
+    }
+
+    var hasLoggedFirstSubscribe: Bool {
+        keychain.get(firstSubscribeLoggedKey) == "1"
     }
 
     private func applyFacebookConfigurationFromBundleIfNeeded() {

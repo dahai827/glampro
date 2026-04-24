@@ -32,7 +32,7 @@ struct RootView: View {
                     subtitle: "No coins needed",
                     gradientColors: [Color(hex: "8E2DE2"), Color(hex: "B33AE6")],
                     shadowColor: Color(hex: "8E2DE2").opacity(0.24),
-                    action: { appState.open(.subscriptionOne) },
+                    action: { appState.open(.subscriptionTwo) },
                     onClose: appState.dismissHomeBanner
                 )
                 .frame(width: UIScreen.main.bounds.width * (2.0 / 3.0))
@@ -40,16 +40,25 @@ struct RootView: View {
                 .zIndex(5)
             }
 
-            if !appState.showSplash && appState.activeRoute == nil {
-                CustomTabBar(selectedTab: appState.selectedTab, shouldShowFeedBadge: appState.shouldShowFeedBadge) { tab in
+            if !appState.showSplash && (appState.activeRoute == nil || (appBootstrap.isReviewVersion && appState.activeRoute == .profile)) {
+                CustomTabBar(
+                    selectedTab: appState.selectedTab,
+                    shouldShowFeedBadge: appState.shouldShowFeedBadge,
+                    isReviewVersion: appBootstrap.isReviewVersion,
+                    isProfileActive: appState.activeRoute == .profile,
+                    onOpenProfile: { appState.open(.profile) }
+                ) { tab in
+                    if appBootstrap.isReviewVersion && appState.activeRoute == .profile {
+                        appState.dismissRoute()
+                    }
                     appState.select(tab: tab)
                 }
                 .padding(.horizontal, 18)
                 .padding(.bottom, 6)
-                .zIndex(6)
+                .zIndex(appBootstrap.isReviewVersion && appState.activeRoute == .profile ? 25 : 6)
             }
 
-            if appState.showRewardPopup {
+            if appState.showRewardPopup && !appBootstrap.isReviewVersion {
                 DailyRewardPopup(
                     status: dailyCheckinStore.status,
                     isClaiming: dailyCheckinStore.isSigning,
@@ -61,7 +70,7 @@ struct RootView: View {
                     .zIndex(10)
             }
 
-            if appState.showFeaturesSheet {
+            if appState.showFeaturesSheet && !appBootstrap.isReviewVersion {
                 FeaturesView(
                     onSelectFeature: openFeatureFromSheet,
                     onSelectVideoSection: openVideoSectionFromSheet,
@@ -215,7 +224,7 @@ struct RootView: View {
                     if sessionManager.isPro {
                         appState.open(.credits)
                     } else {
-                        appState.open(.subscriptionTwo)
+                        appState.open(.subscriptionOne)
                     }
                 }
             )
@@ -383,20 +392,33 @@ struct RootView: View {
 private struct CustomTabBar: View {
     let selectedTab: AppTab
     let shouldShowFeedBadge: Bool
+    let isReviewVersion: Bool
+    let isProfileActive: Bool
+    let onOpenProfile: () -> Void
     let onSelect: (AppTab) -> Void
 
     var body: some View {
-        HStack(alignment: .bottom) {
-            navItem(title: "Home", icon: "house.fill", tab: .home, badge: nil)
-            Spacer(minLength: 0)
-            plusButton
-            Spacer(minLength: 0)
-            navItem(title: "Feed", icon: "play.square.fill", tab: .feed, badge: shouldShowFeedBadge ? 1 : nil)
+        Group {
+            if isReviewVersion {
+                HStack(alignment: .bottom, spacing: 0) {
+                    navItem(title: "video", icon: "house.fill", tab: .home, badge: nil, expands: true)
+                    navItem(title: "Image", icon: "play.square.fill", tab: .feed, badge: shouldShowFeedBadge ? 1 : nil, expands: true)
+                    profileItem(title: "profile", expands: true)
+                }
+            } else {
+                HStack(alignment: .bottom) {
+                    navItem(title: "Home", icon: "house.fill", tab: .home, badge: nil)
+                    Spacer(minLength: 0)
+                    plusButton
+                    Spacer(minLength: 0)
+                    navItem(title: "Feed", icon: "play.square.fill", tab: .feed, badge: shouldShowFeedBadge ? 1 : nil)
+                }
+            }
         }
         .frame(height: 74)
     }
 
-    private func navItem(title: String, icon: String, tab: AppTab, badge: Int?) -> some View {
+    private func navItem(title: String, icon: String, tab: AppTab, badge: Int?, expands: Bool = false) -> some View {
         Button {
             onSelect(tab)
         } label: {
@@ -420,7 +442,24 @@ private struct CustomTabBar: View {
                     .font(.calm(10, weight: .medium))
                     .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.72))
             }
-            .frame(width: 62)
+            .frame(maxWidth: expands ? .infinity : nil)
+            .frame(width: expands ? nil : 62)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func profileItem(title: String = "Profile", expands: Bool) -> some View {
+        Button(action: onOpenProfile) {
+            VStack(spacing: 4) {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(isProfileActive ? .white : .white.opacity(0.78))
+                Text(title)
+                    .font(.calm(10, weight: .medium))
+                    .foregroundColor(isProfileActive ? .white : .white.opacity(0.72))
+            }
+            .frame(maxWidth: expands ? .infinity : nil)
+            .frame(width: expands ? nil : 62)
         }
         .buttonStyle(.plain)
     }
@@ -990,7 +1029,11 @@ private struct SplashScreenView: View {
                 Spacer()
 
                 HStack(spacing: 10) {
-                    BrandOrb(size: 44)
+                    Image("LaunchIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 44, height: 44)
+                        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
                     Text("Glam Pro")
                         .font(.calm(39, weight: .bold))
                         .foregroundColor(.white)

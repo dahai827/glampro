@@ -39,23 +39,48 @@ struct CreditView: View {
     var body: some View {
         GeometryReader { geometry in
             let safeBottom = geometry.safeAreaInsets.bottom
-            let ctaHeight: CGFloat = 104 + max(safeBottom, 8)
+            let ctaHeight: CGFloat = 104
 
-            VStack(spacing: 0) {
-                Spacer(minLength: 6)
-                heroSection
-                    .padding(.top, 42)
-                    .padding(.bottom, 6)
+            ZStack(alignment: .bottom) {
+                if appBootstrap.isReviewVersion {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: max(geometry.size.height * 0.24, 190))
 
-                bottomPanel()
-                    .frame(maxHeight: .infinity)
+                        bottomPanel()
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, ctaHeight - 8)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
 
-                ctaBar(bottomInset: safeBottom)
-                    .frame(height: ctaHeight)
+                    ctaBar(bottomInset: safeBottom)
+                        .frame(height: ctaHeight)
+                } else {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 6)
+                        heroSection
+                            .padding(.top, 42)
+                            .padding(.bottom, 6)
+
+                        bottomPanel()
+                            .frame(maxHeight: .infinity)
+
+                        ctaBar(bottomInset: safeBottom)
+                            .frame(height: ctaHeight)
+                    }
+                }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
             .background {
-                backgroundView
+                if appBootstrap.isReviewVersion {
+                    SubscriptionPaywallVideoBackdropView(
+                        isReviewVersion: true,
+                        blurRadius: 22,
+                        darkness: 0.42
+                    )
+                } else {
+                    backgroundView
+                }
             }
             .overlay(alignment: .top) {
                 topBar
@@ -118,19 +143,11 @@ struct CreditView: View {
 
     private var backgroundView: some View {
         ZStack {
-            if appBootstrap.isReviewVersion {
-                LinearGradient(
-                    colors: [Color(hex: "0E1118"), Color(hex: "172335"), Color(hex: "0A0C12")],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            } else {
-                LinearGradient(
-                    colors: [Color(hex: "120F19"), Color(hex: "1B2A44"), Color(hex: "090B10")],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
+            LinearGradient(
+                colors: [Color(hex: "120F19"), Color(hex: "1B2A44"), Color(hex: "090B10")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
 
             Circle()
                 .fill(GlamProTheme.purple.opacity(0.22))
@@ -166,7 +183,7 @@ struct CreditView: View {
     private func bottomPanel() -> some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Full Glam AI power")
+                Text("Glam Pro Credit Packs")
                     .font(.calm(30, weight: .heavy))
                     .foregroundColor(.white)
 
@@ -197,11 +214,11 @@ struct CreditView: View {
         .padding(.bottom, 14)
         .background(
             RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(Color(hex: "101824").opacity(0.88))
+                .fill(Color(hex: "101824").opacity(appBootstrap.isReviewVersion ? 0.68 : 0.88))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .stroke(Color.white.opacity(appBootstrap.isReviewVersion ? 0.08 : 0.1), lineWidth: 1)
         )
     }
 
@@ -329,20 +346,20 @@ struct CreditView: View {
             ZStack(alignment: .topTrailing) {
                 VStack(alignment: .leading, spacing: 7) {
                     Text(displayNameText(pack.displayName))
-                        .font(.calm(27, weight: .regular))
+                        .font(.calm(25, weight: .regular))
                         .foregroundColor(.white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
 
                     HStack(alignment: .lastTextBaseline, spacing: 8) {
                         Text(displayPriceText(pack.displayPrice))
-                            .font(.calm(23, weight: .regular))
+                            .font(.calm(21, weight: .regular))
                             .foregroundColor(.white)
                             .lineLimit(1)
 
                         if let original = originalPriceText(for: pack) {
                             Text(original)
-                                .font(.calm(20, weight: .regular))
+                                .font(.calm(18, weight: .regular))
                                 .foregroundColor(.white.opacity(0.56))
                                 .strikethrough(true, color: .white.opacity(0.56))
                                 .lineLimit(1)
@@ -352,7 +369,7 @@ struct CreditView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text("Save 50%")
-                    .font(.calm(12, weight: .regular))
+                    .font(.calm(10, weight: .regular))
                     .foregroundColor(.white)
                     .padding(.horizontal, 10)
                     .frame(height: 22)

@@ -2,6 +2,8 @@ import Foundation
 
 @MainActor
 final class AppBootstrapStore: ObservableObject {
+    private static let reviewFontModeDefaultsKey = "glampro.review.font.mode"
+
     @Published private(set) var videoSections: [RemoteFeatureSection] = []
     @Published private(set) var imageSections: [RemoteFeatureSection] = []
     @Published private(set) var featureCards: [RemoteFeatureItem] = []
@@ -28,6 +30,7 @@ final class AppBootstrapStore: ObservableObject {
 
     init(apiClient: APIClient = .shared) {
         self.apiClient = apiClient
+        Self.updateReviewFontMode(isReviewVersion)
     }
 
     func prepareIfNeeded(sessionManager: SessionManager) async {
@@ -114,19 +117,26 @@ final class AppBootstrapStore: ObservableObject {
             reviewVersion = serverVersion.isEmpty ? nil : serverVersion
             if response.success == true {
                 isReviewVersion = !serverVersion.isEmpty && serverVersion == currentVersion
+                Self.updateReviewFontMode(isReviewVersion)
                 didResolveReviewVersion = true
                 print("[Bootstrap] review version resolved. current: \(currentVersion), server: \(serverVersion.isEmpty ? "<empty>" : serverVersion), isReviewVersion: \(isReviewVersion)")
             } else if !didResolveReviewVersion {
                 isReviewVersion = true
+                Self.updateReviewFontMode(isReviewVersion)
                 reviewVersion = nil
             }
         } catch {
             if !didResolveReviewVersion {
                 isReviewVersion = true
+                Self.updateReviewFontMode(isReviewVersion)
                 reviewVersion = nil
             }
             print("[Bootstrap] review version resolve failed: \(error.localizedDescription). Keep review mode: \(isReviewVersion)")
         }
+    }
+
+    private static func updateReviewFontMode(_ isReviewVersion: Bool) {
+        UserDefaults.standard.set(isReviewVersion, forKey: reviewFontModeDefaultsKey)
     }
 
     private func loadFeatureCards() async throws -> [RemoteFeatureItem] {

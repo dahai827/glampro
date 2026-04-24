@@ -21,6 +21,10 @@ struct UploadPhotosView: View {
         previewGenerationStore.activeItem ?? appBootstrap.selectedPreviewItem
     }
 
+    private var resolvedHeaderTitle: String {
+        EnglishTextFallback.resolve(item?.title, fallback: "Upload your photo")
+    }
+
     private var imageSlotCount: Int {
         max(previewGenerationStore.requiredImageCount, 1)
     }
@@ -107,14 +111,9 @@ struct UploadPhotosView: View {
 
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(item?.title ?? "Upload your photo")
+            Text(resolvedHeaderTitle)
                 .font(.calm(24, weight: .heavy))
                 .foregroundColor(.white)
-
-            Text(item?.displaySubtitle ?? "Pick a clear photo to start creating with AI.")
-                .font(.calm(15, weight: .medium))
-                .foregroundColor(GlamProTheme.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")

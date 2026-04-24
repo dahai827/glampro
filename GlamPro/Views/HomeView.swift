@@ -63,8 +63,10 @@ struct HomeView: View {
                 header
                     .padding(.horizontal, 16)
 
-                filterRow
-                    .padding(.horizontal, 16)
+                if !appBootstrap.isReviewVersion {
+                    filterRow
+                        .padding(.horizontal, 16)
+                }
 
                 ScrollView(showsIndicators: false) {
                     contentBody
@@ -119,14 +121,20 @@ struct HomeView: View {
 
     private var homeContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if discoverCarouselItems.isEmpty {
-                heroCard
-            } else {
-                discoverCarousel
+            if !appBootstrap.isReviewVersion {
+                if discoverCarouselItems.isEmpty {
+                    heroCard
+                } else {
+                    discoverCarousel
+                }
             }
 
             if appBootstrap.videoSections.isEmpty {
-                fallbackHomeContent
+                if appBootstrap.isReviewVersion {
+                    reviewLoadingState(title: "Loading video templates...")
+                } else {
+                    fallbackHomeContent
+                }
             } else {
                 dynamicHomeContent
             }
@@ -150,9 +158,11 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     SectionHeader(
                         title: section.displayTitle,
-                        actionTitle: section.items.count > 2 ? "All" : nil,
+                        actionTitle: appBootstrap.isReviewVersion ? nil : (section.items.count > 2 ? "All" : nil),
                         action: {
-                            selectedRemoteSection = section
+                            if !appBootstrap.isReviewVersion {
+                                selectedRemoteSection = section
+                            }
                         }
                     )
 
@@ -164,10 +174,85 @@ struct HomeView: View {
                             .padding(.top, -4)
                     }
 
-                    remoteTrendsRow(items: section.items)
+                    if appBootstrap.isReviewVersion {
+                        reviewSectionGrid(items: section.items)
+                    } else {
+                        remoteTrendsRow(items: section.items)
+                    }
                 }
             }
         }
+    }
+
+    private var reviewHomeGridColumns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: 12, alignment: .top),
+            GridItem(.flexible(), spacing: 12, alignment: .top)
+        ]
+    }
+
+    private func reviewSectionGrid(items: [RemoteFeatureItem]) -> some View {
+        LazyVGrid(columns: reviewHomeGridColumns, spacing: 14) {
+            ForEach(items) { item in
+                ZStack(alignment: .topTrailing) {
+                    Button {
+                        handleRemoteItemSelection(item)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 7) {
+                            ZStack(alignment: .topLeading) {
+                                if let videoURL = item.coverVideoURL {
+                                    RemoteLoopingVideoArtworkView(
+                                        videoURL: videoURL,
+                                        fallbackImageURL: item.effectiveCoverURL,
+                                        paletteIndex: paletteIndex(for: item.id),
+                                        cornerRadius: 14
+                                    )
+                                } else {
+                                    RemoteArtworkView(
+                                        url: item.effectiveCoverURL,
+                                        paletteIndex: paletteIndex(for: item.id),
+                                        cornerRadius: 14,
+                                        contentMode: .fill
+                                    )
+                                }
+
+                                if let badge = remoteBadgeText(for: item) {
+                                    remoteBadge(title: badge)
+                                        .padding(8)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .aspectRatio(3.0 / 4.0, contentMode: .fit)
+
+                            Text(item.title)
+                                .font(.calm(13, weight: .bold))
+                                .foregroundColor(.white)
+                                .lineLimit(2)
+                                .frame(height: 34, alignment: .topLeading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+
+                    SavedTemplateBookmarkButton(item: item, iconSize: 14, padding: 10)
+                }
+                .frame(maxWidth: .infinity, alignment: .top)
+                .id(itemViewIdentity(item))
+            }
+        }
+    }
+
+    private func reviewLoadingState(title: String) -> some View {
+        VStack(alignment: .center, spacing: 10) {
+            ProgressView()
+                .tint(.white.opacity(0.9))
+            Text(title)
+                .font(.calm(14, weight: .medium))
+                .foregroundColor(.white.opacity(0.78))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
     }
 
     private var newContent: some View {
@@ -204,15 +289,19 @@ struct HomeView: View {
             .padding(.top, 6)
 
             if appBootstrap.imageSections.isEmpty {
-                shotsCategoryRow
-                galleryGrid(
-                    cards: scaledShotCards,
-                    primaryBadgeTitle: "New",
-                    primaryBadgeColor: GlamProTheme.pink,
-                    secondaryBadgeTitle: "FREE",
-                    secondaryBadgeColor: Color(hex: "FFB93A"),
-                    trailingIcon: "bookmark"
-                )
+                if appBootstrap.isReviewVersion {
+                    reviewLoadingState(title: "Loading image templates...")
+                } else {
+                    shotsCategoryRow
+                    galleryGrid(
+                        cards: scaledShotCards,
+                        primaryBadgeTitle: "New",
+                        primaryBadgeColor: GlamProTheme.pink,
+                        secondaryBadgeTitle: "FREE",
+                        secondaryBadgeColor: Color(hex: "FFB93A"),
+                        trailingIcon: "bookmark"
+                    )
+                }
             } else {
                 remoteShotsCategoryRow
                 remoteGalleryGrid(items: activeShotsItems)
@@ -271,11 +360,16 @@ struct HomeView: View {
                         Text("\(sessionManager.creditsBalance)")
                             .font(.calm(17, weight: .bold))
                     }
-                    .foregroundColor(Color(hex: "F5C94F"))
-                    .padding(.horizontal, 14)
-                    .frame(height: 38)
-                    .background(Capsule().fill(GlamProTheme.goldGradient))
-                    .overlay(Capsule().stroke(Color.white.opacity(0.07), lineWidth: 0.8))
+                    .foregroundColor(appBootstrap.isReviewVersion ? .white : Color(hex: "F5C94F"))
+                    .padding(.horizontal, appBootstrap.isReviewVersion ? 12 : 14)
+                    .frame(height: appBootstrap.isReviewVersion ? 36 : 38)
+                    .background(
+                        reviewHeaderPillBackground(
+                            isReviewVersion: appBootstrap.isReviewVersion,
+                            fallback: GlamProTheme.goldGradient
+                        )
+                    )
+                    .overlay(reviewHeaderPillBorder(isReviewVersion: appBootstrap.isReviewVersion))
                 }
                 .buttonStyle(.plain)
 
@@ -284,23 +378,30 @@ struct HomeView: View {
                         .font(.calm(17, weight: .bold))
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
-                        .foregroundColor(Color(hex: "F5C94F"))
-                        .padding(.horizontal, 14)
-                        .frame(height: 38)
-                        .background(Capsule().fill(GlamProTheme.goldGradient))
-                        .overlay(Capsule().stroke(Color.white.opacity(0.07), lineWidth: 0.8))
+                        .foregroundColor(appBootstrap.isReviewVersion ? .white : Color(hex: "F5C94F"))
+                        .padding(.horizontal, appBootstrap.isReviewVersion ? 12 : 14)
+                        .frame(height: appBootstrap.isReviewVersion ? 36 : 38)
+                        .background(
+                            reviewHeaderPillBackground(
+                                isReviewVersion: appBootstrap.isReviewVersion,
+                                fallback: GlamProTheme.goldGradient
+                            )
+                        )
+                        .overlay(reviewHeaderPillBorder(isReviewVersion: appBootstrap.isReviewVersion))
                 }
                 .buttonStyle(.plain)
             }
             .layoutPriority(1)
 
-            CircleIconButton(
-                icon: "person.fill",
-                iconColor: .black,
-                backgroundColor: .white,
-                borderColor: Color.black.opacity(0.08),
-                action: openProfile
-            )
+            if !appBootstrap.isReviewVersion {
+                CircleIconButton(
+                    icon: "person.fill",
+                    iconColor: .black,
+                    backgroundColor: .white,
+                    borderColor: Color.black.opacity(0.08),
+                    action: openProfile
+                )
+            }
         }
     }
 
@@ -331,6 +432,21 @@ struct HomeView: View {
             }
             .padding(.vertical, 2)
         }
+    }
+
+    @ViewBuilder
+    private func reviewHeaderPillBackground(isReviewVersion: Bool, fallback: LinearGradient) -> some View {
+        if isReviewVersion {
+            Capsule().fill(Color.white.opacity(0.1))
+        } else {
+            Capsule().fill(fallback)
+        }
+    }
+
+    @ViewBuilder
+    private func reviewHeaderPillBorder(isReviewVersion: Bool) -> some View {
+        Capsule()
+            .stroke(isReviewVersion ? Color.white.opacity(0.2) : Color.white.opacity(0.07), lineWidth: 0.8)
     }
 
     private func filterChip(title: String, systemImage: String?, badgeText: String? = nil, section: HomeSection) -> some View {

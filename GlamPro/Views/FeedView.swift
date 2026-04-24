@@ -37,7 +37,9 @@ struct FeedView: View {
 
             Spacer(minLength: 0)
 
-            CircleIconButton(icon: "person.fill", action: openProfile)
+            if !appBootstrap.isReviewVersion {
+                CircleIconButton(icon: "person.fill", action: openProfile)
+            }
         }
     }
 

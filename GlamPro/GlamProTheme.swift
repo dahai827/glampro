@@ -73,6 +73,26 @@ extension Color {
 
 extension Font {
     static func calm(_ size: CGFloat, weight: Weight = .regular) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        let isReviewVersion = UserDefaults.standard.bool(forKey: "glampro.review.font.mode")
+        return .system(size: size, weight: weight, design: isReviewVersion ? .default : .rounded)
+    }
+}
+
+enum EnglishTextFallback {
+    static func resolve(_ text: String?, fallback: String) -> String {
+        guard let raw = text?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return fallback
+        }
+        return containsNonEnglish(raw) ? fallback : raw
+    }
+
+    private static func containsNonEnglish(_ text: String) -> Bool {
+        for scalar in text.unicodeScalars {
+            if scalar.value <= 0x007F { continue } // ASCII
+            if scalar.properties.isEmoji || scalar.properties.isEmojiPresentation { continue }
+            if CharacterSet.symbols.contains(scalar) { continue }
+            return true
+        }
+        return false
     }
 }

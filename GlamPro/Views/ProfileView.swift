@@ -27,7 +27,7 @@ struct ProfileView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
                     topBar
-                    profileHeader
+                    proBanner
                     segmentedTabs
                     segmentContent
                 }
@@ -61,19 +61,7 @@ struct ProfileView: View {
     private var topBar: some View {
         HStack(spacing: 10) {
             CircleIconButton(icon: "xmark", action: onClose)
-
             Spacer(minLength: 0)
-
-            Text("Support")
-                .font(.calm(15, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 15)
-                .frame(height: 34)
-                .background(Capsule().fill(Color.white.opacity(0.09)))
-
-            CircleIconButton(icon: "gift", action: {})
-            CircleIconButton(icon: "gearshape.fill", action: {})
-            CircleIconButton(icon: "bell", action: {})
         }
     }
 
@@ -110,31 +98,65 @@ struct ProfileView: View {
         )
     }
 
-    private var profileHeader: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center, spacing: 16) {
-                Circle()
-                    .fill(Color.white.opacity(0.14))
-                    .frame(width: 64, height: 64)
-                    .overlay(
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 31))
-                            .foregroundColor(.white.opacity(0.92))
-                    )
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(sessionManager.displayUserName)
-                        .font(.calm(20, weight: .bold))
+    private var proBanner: some View {
+        Button(action: handleProBannerTap) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.22))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: sessionManager.isPro ? "checkmark.seal.fill" : "crown.fill")
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white)
-
-                    HStack(spacing: 26) {
-                        statColumn(value: "\(historyViewModel.tasks.count)", title: "History")
-                        statColumn(value: "\(savedTemplatesStore.items.count)", title: "Saved")
-                        statColumn(value: "\(likedTemplatesStore.items.count)", title: "Likes")
-                    }
                 }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(sessionManager.isPro ? "PRO Membership Active" : "Upgrade to PRO")
+                        .font(.calm(18, weight: .bold))
+                        .foregroundColor(.white)
+                    Text(proStatusSubtitle)
+                        .font(.calm(13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.78))
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white.opacity(0.9))
             }
+            .padding(.horizontal, 14)
+            .frame(height: 68)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: sessionManager.isPro
+                                ? [Color(hex: "F26BCB"), Color(hex: "8B5CFF")]
+                                : [Color(hex: "FF86D6"), Color(hex: "A16BFF")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
+            )
         }
+        .buttonStyle(.plain)
+    }
+
+    private var proStatusSubtitle: String {
+        if sessionManager.isPro {
+            return "Status: Active"
+        }
+        return "Unlock unlimited creations and premium tools."
+    }
+
+    private func handleProBannerTap() {
+        appState.open(.subscriptionTwo)
     }
 
     private var segmentedTabs: some View {

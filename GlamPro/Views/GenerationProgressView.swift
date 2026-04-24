@@ -246,7 +246,10 @@ struct GenerationProgressView: View {
         case .failed:
             return "Generation needs attention"
         default:
-            return previewGenerationStore.activeItem?.title ?? "Creating your result"
+            return EnglishTextFallback.resolve(
+                previewGenerationStore.activeItem?.title,
+                fallback: "Creating your result"
+            )
         }
     }
 
@@ -257,7 +260,7 @@ struct GenerationProgressView: View {
         case .failed:
             return "The task stopped before completion. You can go back and try again."
         default:
-            return previewGenerationStore.activeItem?.displaySubtitle ?? "Stay on this screen while Glam Pro AI finishes your creation."
+            return "Stay on this screen while Glam Pro AI finishes your creation."
         }
     }
 

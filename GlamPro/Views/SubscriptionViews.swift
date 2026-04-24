@@ -3,6 +3,7 @@ import StoreKit
 import AVFoundation
 
 struct SubscriptionOfferOneView: View {
+    @EnvironmentObject private var sessionManager: SessionManager
     @EnvironmentObject private var appBootstrap: AppBootstrapStore
     @EnvironmentObject private var previewGenerationStore: PreviewGenerationStore
 
@@ -16,6 +17,7 @@ struct SubscriptionOfferOneView: View {
     @State private var progressTask: Task<Void, Never>?
     @State private var countdownTask: Task<Void, Never>?
     @State private var guideStartedAt = Date()
+    @State private var suppressPromptTapUntil: Date = .distantPast
 
     private var selectedItem: RemoteFeatureItem? {
         previewGenerationStore.activeItem ?? appBootstrap.selectedPreviewItem
@@ -43,7 +45,9 @@ struct SubscriptionOfferOneView: View {
                         title: "Your preview is almost ready",
                         subtitle: "Unlock full results, unlimited styles, and priority generation with Glam Pro.",
                         buttonTitle: "Unlock Result",
-                        caption: "Tap anywhere to continue"
+                        caption: "Tap anywhere to continue",
+                        showsPreviewCard: false,
+                        allowsTapAnywhere: true
                     ) {
                         openPaywall()
                     }
@@ -64,8 +68,12 @@ struct SubscriptionOfferOneView: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
             .background {
-                SubscriptionBackdropView(item: selectedItem, blurRadius: phase == .generating ? 0 : 28, darkness: 0.56)
-                    .ignoresSafeArea()
+                if phase == .unlockPrompt {
+                    SubscriptionPromptMediaBackgroundView(item: selectedItem)
+                } else {
+                    SubscriptionBackdropView(item: selectedItem, blurRadius: phase == .generating ? 0 : 28, darkness: 0.56)
+                        .ignoresSafeArea()
+                }
             }
             .overlay(alignment: .top) {
                 if phase != .generating && phase != .exitConfirm {
@@ -83,7 +91,12 @@ struct SubscriptionOfferOneView: View {
         .onDisappear(perform: stopGuideTasks)
         .fullScreenCover(isPresented: $showPaywall) {
             SubscriptionOfferTwoView(
-                onClose: { showPaywall = false },
+                onClose: {
+                    showPaywall = false
+                    if sessionManager.userStatus?.isSubscriptionActive == true {
+                        onClose()
+                    }
+                },
                 onSubscribed: {
                     showPaywall = false
                     onClose()
@@ -97,13 +110,17 @@ struct SubscriptionOfferOneView: View {
         subtitle: String,
         buttonTitle: String,
         caption: String,
+        showsPreviewCard: Bool = true,
+        allowsTapAnywhere: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         VStack(spacing: 22) {
             Spacer(minLength: 48)
 
-            SubscriptionGuidePreviewCard(item: selectedItem)
-                .padding(.horizontal, 24)
+            if showsPreviewCard {
+                SubscriptionGuidePreviewCard(item: selectedItem)
+                    .padding(.horizontal, 24)
+            }
 
             Spacer(minLength: 24)
 
@@ -155,7 +172,10 @@ struct SubscriptionOfferOneView: View {
             .padding(.bottom, 18)
         }
         .contentShape(Rectangle())
-        .onTapGesture(perform: action)
+        .onTapGesture {
+            guard allowsTapAnywhere else { return }
+            action()
+        }
     }
 
     private var exitConfirmView: some View {
@@ -180,7 +200,7 @@ struct SubscriptionOfferOneView: View {
                             phase = .activeTasks
                         }
                     } label: {
-                        Text("View Active Tasks")
+                        Text("View Now")
                             .font(.calm(18, weight: .bold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -193,9 +213,11 @@ struct SubscriptionOfferOneView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        openPaywall()
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            phase = .activeTasks
+                        }
                     } label: {
-                        Text("Unlock Instead")
+                        Text("Confirm")
                             .font(.calm(17, weight: .bold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -265,7 +287,7 @@ struct SubscriptionOfferOneView: View {
                 Button(action: openPaywall) {
                     HStack(spacing: 14) {
                         SubscriptionGuidePreviewCard(item: selectedItem, compact: true)
-                            .frame(width: 92, height: 120)
+                            .frame(width: 104, height: 104)
 
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 8) {
@@ -362,6 +384,9 @@ struct SubscriptionOfferOneView: View {
     }
 
     private func handleGuideCloseTapped() {
+        // Prevent the prompt-wide tap gesture from firing right after close tap.
+        suppressPromptTapUntil = Date().addingTimeInterval(0.35)
+
         switch phase {
         case .unlockPrompt:
             withAnimation(.easeInOut(duration: 0.25)) {
@@ -378,7 +403,14 @@ struct SubscriptionOfferOneView: View {
         }
     }
 
+    private func moveToCountdownPhase() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            phase = .countdown
+        }
+    }
+
     private func openPaywall() {
+        guard Date() >= suppressPromptTapUntil else { return }
         showPaywall = true
     }
 }
@@ -400,12 +432,11 @@ struct SubscriptionOfferTwoView: View {
     var showsCloseWithDelay = true
 
     private let featureBullets = [
-        "Unlock all premium AI tools",
-        "Advanced editing for pro results",
-        "1000+ exclusive style presets",
-        "New filters updated every day",
-        "Export in ultra-clear HD quality",
-        "Create clean videos with no watermark"
+        "Unlock All Membership Features",
+        "Unlock All Styles & Presets",
+        "Supports Commercial Use",
+        "High Resolution, No Watermark",
+        "New Filters Every Day"
     ]
 
     private var selectedItem: RemoteFeatureItem? {
@@ -481,7 +512,9 @@ struct SubscriptionOfferTwoView: View {
         GeometryReader { geometry in
             let safeBottom = geometry.safeAreaInsets.bottom
             let metrics = PaywallMetrics(size: geometry.size)
-            let ctaTotalHeight = metrics.ctaHeight + safeBottom
+            let ctaVisualHeight = appBootstrap.isReviewVersion ? metrics.v(72) : metrics.ctaHeight
+            let ctaBottomInset = appBootstrap.isReviewVersion ? metrics.v(10) : 0
+            let ctaTotalHeight = ctaVisualHeight + safeBottom + ctaBottomInset
 
             ZStack(alignment: .bottom) {
                 VStack(spacing: 0) {
@@ -492,7 +525,7 @@ struct SubscriptionOfferTwoView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
 
-                continueButton(bottomInset: safeBottom, metrics: metrics)
+                continueButton(bottomInset: safeBottom, metrics: metrics, ctaHeight: ctaVisualHeight, ctaBottomInset: ctaBottomInset)
                     .padding(.horizontal, metrics.ctaHorizontalInset)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
@@ -582,7 +615,7 @@ struct SubscriptionOfferTwoView: View {
     private func paywallPanel(bottomInset: CGFloat, metrics: PaywallMetrics) -> some View {
         VStack(alignment: .leading, spacing: metrics.v(16)) {
             VStack(alignment: .leading, spacing: metrics.v(10)) {
-                Text("Join Glam Pro")
+                Text("Unlock GlamPro AI Tools")
                     .font(.calm(metrics.v(32), weight: .heavy))
                     .foregroundColor(.white)
             }
@@ -637,7 +670,7 @@ struct SubscriptionOfferTwoView: View {
         )
     }
 
-    private func continueButton(bottomInset: CGFloat, metrics: PaywallMetrics) -> some View {
+    private func continueButton(bottomInset: CGFloat, metrics: PaywallMetrics, ctaHeight: CGFloat, ctaBottomInset: CGFloat) -> some View {
         let gradientFill = canInteract
             ? LinearGradient(colors: [Color(hex: "FF3E74"), Color(hex: "F59D5D")], startPoint: .leading, endPoint: .trailing)
             : LinearGradient(colors: [Color.white.opacity(0.18), Color.white.opacity(0.12)], startPoint: .leading, endPoint: .trailing)
@@ -645,18 +678,34 @@ struct SubscriptionOfferTwoView: View {
         return Button {
             purchaseSelectedPlan()
         } label: {
-            ZStack(alignment: .top) {
-                SubscriptionTopRoundedShape(radius: metrics.v(38))
-                    .fill(gradientFill)
-                    .frame(height: metrics.ctaHeight + bottomInset + 1)
+            Group {
+                if appBootstrap.isReviewVersion {
+                    Text(continueButtonTitle)
+                        .font(.calm(metrics.v(22), weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: ctaHeight)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(gradientFill)
+                        )
+                        .padding(.horizontal, metrics.h(20))
+                        .padding(.bottom, bottomInset + ctaBottomInset)
+                } else {
+                    ZStack(alignment: .top) {
+                        SubscriptionTopRoundedShape(radius: metrics.v(38))
+                            .fill(gradientFill)
+                            .frame(height: ctaHeight + bottomInset + 1)
 
-                Text(continueButtonTitle)
-                    .font(.calm(metrics.v(18), weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.top, metrics.v(30))
+                        Text(continueButtonTitle)
+                            .font(.calm(metrics.v(22), weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, metrics.v(30))
+                    }
+                }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: metrics.ctaHeight + bottomInset + 1, alignment: .top)
+            .frame(height: ctaHeight + bottomInset + ctaBottomInset + 1, alignment: .top)
         }
         .buttonStyle(.plain)
         .disabled(!canInteract || effectiveSelectedPlan == nil)
@@ -680,11 +729,11 @@ struct SubscriptionOfferTwoView: View {
             HStack(alignment: .center, spacing: metrics.h(12)) {
                 VStack(alignment: .leading, spacing: metrics.v(4)) {
                     Text(plan.shortTitle)
-                        .font(.calm(metrics.v(50.0 / 3.0), weight: .heavy))
+                        .font(.calm(metrics.v((50.0 / 3.0) + 2), weight: .heavy))
                         .foregroundColor(.white)
 
                     Text(leftText)
-                        .font(.calm(metrics.v(48.0 / 3.0), weight: .bold))
+                        .font(.calm(metrics.v((48.0 / 3.0) + 2), weight: .bold))
                         .foregroundColor(.white.opacity(0.82))
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
@@ -736,7 +785,7 @@ struct SubscriptionOfferTwoView: View {
             HStack(spacing: metrics.h(12)) {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(plan.shortTitle)
-                        .font(.calm(metrics.v(50.0 / 3.0), weight: .heavy))
+                        .font(.calm(metrics.v((50.0 / 3.0) + 2), weight: .heavy))
                         .foregroundColor(.white)
                 }
 
@@ -872,6 +921,12 @@ private enum SubscriptionPurchaseActionState: Equatable {
     case processing
     case verifying
     case restoring
+}
+
+private enum SubscriptionVerifySource: String {
+    case purchase
+    case restore
+    case transactionUpdate
 }
 
 struct SubscriptionPlan: Identifiable, Equatable {
@@ -1067,7 +1122,11 @@ final class SubscriptionStore: ObservableObject {
             switch result {
             case let .success(verification):
                 onVerificationStarted()
-                try await verifySubscription(verification: verification, sessionManager: sessionManager)
+                try await verifySubscription(
+                    verification: verification,
+                    sessionManager: sessionManager,
+                    source: .purchase
+                )
             case .userCancelled:
                 throw SubscriptionStoreError.userCancelled
             case .pending:
@@ -1113,7 +1172,11 @@ final class SubscriptionStore: ObservableObject {
             }
 
             onVerificationStarted()
-            try await verifySubscription(verification: matchedVerification, sessionManager: sessionManager)
+            try await verifySubscription(
+                verification: matchedVerification,
+                sessionManager: sessionManager,
+                source: .restore
+            )
         } catch let error as SubscriptionStoreError {
             throw error
         } catch {
@@ -1126,7 +1189,11 @@ final class SubscriptionStore: ObservableObject {
         sessionManager: SessionManager
     ) async {
         do {
-            try await verifySubscription(verification: verification, sessionManager: sessionManager)
+            try await verifySubscription(
+                verification: verification,
+                sessionManager: sessionManager,
+                source: .transactionUpdate
+            )
             print("[StoreKit][Subscription] handled transaction update")
         } catch {
             print("[StoreKit][Subscription] transaction update handling failed: \(error.localizedDescription)")
@@ -1139,7 +1206,8 @@ final class SubscriptionStore: ObservableObject {
 
     private func verifySubscription(
         verification: VerificationResult<StoreKit.Transaction>,
-        sessionManager: SessionManager
+        sessionManager: SessionManager,
+        source: SubscriptionVerifySource
     ) async throws {
         let transaction: StoreKit.Transaction
         do {
@@ -1181,10 +1249,14 @@ final class SubscriptionStore: ObservableObject {
             await sessionManager.refreshUserStatus()
         }
 
-        FacebookAnalyticsService.shared.logSubscribe(
-            planID: transaction.productID,
-            value: nil
-        )
+        if source == .purchase {
+            FacebookAnalyticsService.shared.logSubscribe(
+                planID: transaction.productID,
+                value: nil
+            )
+        } else {
+            print("[Facebook] skip event=Subscribe (source=\(source.rawValue))")
+        }
 
         await transaction.finish()
     }
@@ -1391,7 +1463,7 @@ final class SubscriptionStore: ObservableObject {
     ]
 }
 
-private struct SubscriptionPaywallVideoBackdropView: View {
+struct SubscriptionPaywallVideoBackdropView: View {
     let isReviewVersion: Bool
     let blurRadius: CGFloat
     let darkness: CGFloat
@@ -1569,6 +1641,57 @@ private struct SubscriptionBackdropView: View {
     }
 }
 
+private struct SubscriptionPromptMediaBackgroundView: View {
+    let item: RemoteFeatureItem?
+
+    private var paletteIndex: Int {
+        abs((item?.id ?? "subscription-unlock-prompt").hashValue) % 8
+    }
+
+    var body: some View {
+        ZStack {
+            Color(hex: "0A0A0F")
+                .ignoresSafeArea()
+
+            if let videoURL = item?.coverVideoURL {
+                RemoteLoopingVideoArtworkView(
+                    videoURL: videoURL,
+                    fallbackImageURL: item?.effectiveCoverURL,
+                    paletteIndex: paletteIndex,
+                    cornerRadius: 0
+                )
+                .scaleEffect(1.06)
+                .blur(radius: 18)
+                .ignoresSafeArea()
+            } else {
+                RemoteArtworkView(
+                    url: item?.effectiveCoverURL,
+                    paletteIndex: paletteIndex,
+                    cornerRadius: 0,
+                    contentMode: .fill
+                )
+                .scaleEffect(1.06)
+                .blur(radius: 18)
+                .ignoresSafeArea()
+            }
+
+            LinearGradient(
+                colors: [Color.black.opacity(0.28), Color.black.opacity(0.62)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            LinearGradient(
+                colors: [Color.black.opacity(0.12), Color.clear, Color.black.opacity(0.4)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        }
+    }
+}
+
 private struct SubscriptionGuideGeneratingView: View {
     let progress: Double
 
@@ -1624,19 +1747,23 @@ private struct SubscriptionGuidePreviewCard: View {
     }
 
     var body: some View {
+        let cornerRadius = compact ? CGFloat(18) : CGFloat(30)
+        let cardHeight = compact ? CGFloat(104) : CGFloat(320)
+        let cardWidth = compact ? cardHeight : nil
+
         ZStack(alignment: .center) {
             RemoteArtworkView(
                 url: item?.effectiveCoverURL,
                 paletteIndex: paletteIndex,
-                cornerRadius: compact ? 22 : 30,
+                cornerRadius: cornerRadius,
                 contentMode: .fill
             )
-            .blur(radius: compact ? 10 : 16)
+            .blur(radius: compact ? 6 : 16)
             .overlay(Color.black.opacity(0.18))
 
             VStack(spacing: compact ? 8 : 12) {
                 Image(systemName: "lock.fill")
-                    .font(.system(size: compact ? 22 : 30, weight: .bold))
+                    .font(.system(size: compact ? 18 : 30, weight: .bold))
                     .foregroundColor(.white)
 
                 if !compact {
@@ -1646,9 +1773,10 @@ private struct SubscriptionGuidePreviewCard: View {
                 }
             }
         }
-        .frame(height: compact ? 120 : 320)
+        .frame(width: cardWidth, height: cardHeight)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: compact ? 22 : 30, style: .continuous)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
     }
