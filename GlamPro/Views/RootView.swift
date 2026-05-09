@@ -1034,7 +1034,7 @@ private struct SplashScreenView: View {
                         .scaledToFit()
                         .frame(width: 44, height: 44)
                         .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
-                    Text("Glam Pro")
+                    Text("CLAM")
                         .font(.calm(39, weight: .bold))
                         .foregroundColor(.white)
                 }

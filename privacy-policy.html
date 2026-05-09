@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Glam Pro Privacy Policy</title>
+  <meta name="description" content="CLAM Privacy Policy - We do not send face data or user media to third-party AI providers. AI processing is performed on-device or on our own servers." />
+  <title>CLAM Privacy Policy</title>
   <style>
     :root {
       --bg: #f7f8fb;
@@ -21,11 +22,7 @@
       color: var(--text);
       line-height: 1.65;
     }
-    .wrap {
-      max-width: 920px;
-      margin: 0 auto;
-      padding: 28px 16px 48px;
-    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 28px 16px 48px; }
     .card {
       background: var(--card);
       border: 1px solid var(--line);
@@ -33,19 +30,35 @@
       padding: 22px;
       box-shadow: 0 4px 18px rgba(10, 22, 50, 0.04);
     }
-    h1, h2 { line-height: 1.3; margin: 0 0 12px; }
+    h1, h2, h3 { line-height: 1.3; margin: 0 0 12px; }
     h1 { font-size: 1.9rem; }
     h2 { font-size: 1.18rem; margin-top: 22px; }
+    h3 { font-size: 1rem; margin-top: 16px; }
     p, li { color: var(--text); }
     .muted { color: var(--muted); }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
     ul { margin: 8px 0 0 18px; padding: 0; }
-    code {
-      background: #f1f4fa;
-      padding: 1px 6px;
-      border-radius: 6px;
-      font-size: 0.92em;
+    .legal-docs {
+      background: #f0f4f8;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 6px 0 24px;
+    }
+    .legal-docs p { margin: 0 0 6px; }
+    .face-data-index {
+      background-color: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 0 0 24px;
+    }
+    .highlight {
+      background: #edf3ff;
+      border-left: 4px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 14px 16px;
+      margin: 12px 0 20px;
     }
   </style>
 </head>
@@ -53,37 +66,57 @@
   <main class="wrap">
     <section class="card">
       <h1>Privacy Policy</h1>
-      <p class="muted"><strong>App:</strong> Glam Pro</p>
+      <p class="muted"><strong>App:</strong> CLAM</p>
       <p class="muted"><strong>Bundle ID:</strong> com.liuying.glampro</p>
-      <p class="muted"><strong>Effective Date:</strong> April 15, 2026</p>
+      <p class="muted"><strong>Last Updated:</strong> May 9, 2026</p>
+
+      <div class="legal-docs">
+        <p><strong>Related Legal Documents</strong></p>
+        <p><strong>Terms of Use (EULA):</strong> <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Apple Media Services Terms and Conditions (EULA)</a></p>
+        <p>By using CLAM, you agree to this Privacy Policy and the Terms of Use (EULA) linked above.</p>
+      </div>
 
       <p>
-        This Privacy Policy explains how Glam Pro ("we", "us", "our") collects, uses, stores, and shares
-        information when you use the Glam Pro iOS application (the "App").
+        This Privacy Policy explains how CLAM ("we", "us", "our") collects, uses, stores, and shares
+        information when you use the CLAM iOS application (the "App").
       </p>
 
+      <div class="highlight">
+        <strong>Important Commitment:</strong> CLAM does not send your personal data, photos, images containing
+        faces, prompts, or generated content to any third-party AI service providers. All AI-related processing is
+        performed on your device or on our own servers under our direct control.
+      </div>
+
+      <div class="face-data-index">
+        <p><strong>Face Data Summary</strong></p>
+        <p>
+          Our App processes images that may contain facial information for AI generation features. Face data collection,
+          use, disclosure, sharing, storage, and retention are explained in <strong>Section 1.2 Face Data</strong>,
+          with additional details in Section 4 (Third-Party Services and Data Sharing), Section 6 (Data Storage and
+          Retention), and Section 7 (Your Choices and Rights).
+        </p>
+      </div>
+
       <h2>1. Information We Collect</h2>
+      <h3>1.1 General Data</h3>
       <ul>
-        <li>
-          <strong>Account and session data:</strong> anonymous account identifiers, authentication/session tokens,
-          and related status data needed to keep you signed in and deliver app features.
-        </li>
-        <li>
-          <strong>Device and app data:</strong> basic device/app metadata (for example, app version and technical
-          diagnostics) and app event data used for analytics and attribution.
-        </li>
-        <li>
-          <strong>Purchase data:</strong> subscription and consumable purchase information needed to verify purchases
-          and update subscription/credit status.
-        </li>
-        <li>
-          <strong>User content:</strong> photos/videos you choose to upload for AI generation and generated outputs
-          returned to you.
-        </li>
-        <li>
-          <strong>Feedback data:</strong> information you submit through in-app feedback/contact channels.
-        </li>
+        <li><strong>Account and session data:</strong> anonymous account identifiers, authentication/session tokens, and related status data needed to keep you signed in and deliver app features.</li>
+        <li><strong>Device and app data:</strong> basic device/app metadata and app event data used for analytics and attribution.</li>
+        <li><strong>Purchase data:</strong> subscription and consumable purchase information needed to verify purchases and update subscription/credit status.</li>
+        <li><strong>User content:</strong> photos/videos you choose to upload for AI generation (which may contain faces), text prompts you provide, and generated outputs returned to you.</li>
+        <li><strong>Feedback data:</strong> information you submit through in-app feedback/contact channels.</li>
       </ul>
+
+      <h3>1.2 Face Data</h3>
+      <p>When you use CLAM AI generation features, the App may process images that contain facial information. We collect and use face data only as follows:</p>
+      <ul>
+        <li><strong>What we collect (collection):</strong> Images you upload or capture that may contain your face or the face of others, solely to provide the feature you request.</li>
+        <li><strong>How we use it (use):</strong> Face data is used exclusively to perform requested AI generation. We do not use face data for identity recognition, biometric identification, profiling, or advertising.</li>
+        <li><strong>Disclosure and sharing:</strong> We do <strong>not</strong> disclose or share face data with any third-party AI providers. Face data is processed only on your device or on our own servers.</li>
+        <li><strong>Storage:</strong> If server-side processing is needed, face data (as part of uploaded media) is stored only on infrastructure directly controlled by us and not transmitted to external AI providers.</li>
+        <li><strong>Retention:</strong> Face data processed on our servers is automatically deleted within 7 days after processing completion. You may request deletion at any time (see Section 7); deletion requests are processed within 30 days.</li>
+      </ul>
+      <p>Face data collection, use, disclosure, sharing, storage, and retention are explained in this section and in Section 4, Section 6, and Section 7.</p>
 
       <h2>2. Permissions We Use</h2>
       <ul>
@@ -92,9 +125,6 @@
         <li><strong>Photo Library (Add):</strong> to save generated media to your device.</li>
         <li><strong>Tracking (ATT):</strong> permission is requested under Apple's App Tracking Transparency framework for attribution/measurement where applicable.</li>
       </ul>
-      <p>
-        You can manage permissions in iOS Settings at any time. If you deny a permission, related features may not work fully.
-      </p>
 
       <h2>3. How We Use Information</h2>
       <ul>
@@ -105,22 +135,19 @@
         <li>Respond to support or feedback requests.</li>
       </ul>
 
-      <h2>4. Third-Party Services</h2>
-      <p>We use third-party services to operate the App, including:</p>
+      <h2>4. Third-Party Services and Data Sharing</h2>
+      <p><strong>CLAM does not use any third-party AI services.</strong> No user data (photos, images containing faces, prompts, or generated content) is sent to external AI providers.</p>
+      <p>We may use non-AI third-party service providers to operate the App, including:</p>
       <ul>
         <li><strong>Apple (StoreKit):</strong> in-app purchase processing and receipt-related verification workflows.</li>
         <li><strong>Meta/Facebook SDK:</strong> analytics and attribution-related app events.</li>
-        <li><strong>Backend infrastructure providers (e.g., Supabase-hosted APIs):</strong> account/session handling, task processing, and content-related service operations.</li>
+        <li><strong>Backend infrastructure providers:</strong> account/session handling, task processing, and content-related service operations.</li>
       </ul>
-      <p>
-        These providers process data under their own terms and privacy policies.
-      </p>
+      <p>These providers process only the data necessary for their services and do not receive face data for AI processing.</p>
+      <p><strong>We do not share user media or face data with third-party AI providers.</strong></p>
 
       <h2>5. Tracking and ATT</h2>
-      <p>
-        Where required, tracking-related data access depends on your ATT choice. If you decline tracking permission,
-        attribution capabilities may be limited, but core app functionality remains available.
-      </p>
+      <p>Where required, tracking-related data access depends on your ATT choice. If you decline tracking permission, attribution capabilities may be limited, but core app functionality remains available.</p>
 
       <h2>6. Data Storage and Retention</h2>
       <ul>
@@ -128,40 +155,29 @@
         <li>Certain app state/preferences may be stored locally (for example, in UserDefaults).</li>
         <li>Uploaded and generated media may be processed/stored on backend services as needed to provide features.</li>
       </ul>
-      <p>
-        We retain information for as long as reasonably necessary to provide services, comply with legal obligations,
-        resolve disputes, and enforce agreements.
-      </p>
+      <p>We retain information only as long as necessary to provide services, comply with legal obligations, resolve disputes, and enforce agreements.</p>
+      <p><strong>Face data and media retention:</strong> Images and videos containing facial information that are processed for AI features are automatically deleted from our servers within 7 days after processing completion. You may request deletion at any time (see Section 7), and we will process deletion requests within 30 days.</p>
 
       <h2>7. Your Choices and Rights</h2>
       <ul>
         <li>Control permissions through iOS Settings.</li>
         <li>Request support through the in-app contact/feedback entry.</li>
+        <li>Request deletion of your personal data (including uploaded media and face data).</li>
         <li>You may uninstall the App at any time to stop further local data use.</li>
       </ul>
+      <p>To request data deletion, contact us at <a href="mailto:info@streamflowai.store">info@streamflowai.store</a> or use in-app feedback. We typically process deletion requests within 30 days.</p>
 
       <h2>8. Children's Privacy</h2>
-      <p>
-        The App is not directed to children under 13 (or the minimum age required by local law), and we do not
-        knowingly collect personal information from children.
-      </p>
+      <p>The App is not directed to children under 13 (or the minimum age required by local law), and we do not knowingly collect personal information from children.</p>
 
       <h2>9. Security</h2>
-      <p>
-        We use reasonable technical and organizational measures designed to protect information. No system can be
-        guaranteed 100% secure.
-      </p>
+      <p>We use reasonable technical and organizational measures designed to protect information. No system can be guaranteed 100% secure.</p>
 
       <h2>10. Changes to This Policy</h2>
-      <p>
-        We may update this Privacy Policy from time to time. Updated versions will be posted with a revised
-        "Effective Date".
-      </p>
+      <p>We may update this Privacy Policy from time to time. Updated versions will be posted with a revised "Last Updated" date.</p>
 
       <h2>11. Contact Us</h2>
-      <p>
-        If you have questions about this Privacy Policy, please contact us through the in-app feedback/contact page.
-      </p>
+      <p>If you have questions about this Privacy Policy or our data practices, contact us at <a href="mailto:info@streamflowai.store">info@streamflowai.store</a> or through the in-app feedback/contact page.</p>
     </section>
   </main>
 </body>

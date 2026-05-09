@@ -15,6 +15,7 @@ struct UploadPhotosView: View {
     @State private var pickerSource: UIImagePickerController.SourceType = .photoLibrary
     @State private var isShowingImagePicker = false
     @State private var showCameraAlert = false
+    @State private var showReviewGenerationDisclosure = false
     @State private var photoPermissionMessage: String?
 
     private var item: RemoteFeatureItem? {
@@ -81,6 +82,7 @@ struct UploadPhotosView: View {
         } message: {
             Text(photoPermissionMessage ?? "")
         }
+        .reviewGenerationDisclosure(isPresented: $showReviewGenerationDisclosure)
         .task(id: item?.id) {
             previewGenerationStore.syncPreviewItem(item)
             activeSlotIndex = 0
@@ -214,6 +216,11 @@ struct UploadPhotosView: View {
 
                     if shouldPromptForCreditPurchase {
                         onInsufficientCredits()
+                        return
+                    }
+
+                    if appBootstrap.shouldPresentReviewGenerationDisclosure() {
+                        showReviewGenerationDisclosure = true
                         return
                     }
 

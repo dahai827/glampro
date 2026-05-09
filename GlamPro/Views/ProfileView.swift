@@ -1230,7 +1230,7 @@ private struct ProfileTaskPreviewView: View {
             guard ProfileMediaSaver.isPhotoLibraryAccessGranted(status) else {
                 saveFeedback = SaveFeedback(
                     title: "Photos Access Needed",
-                    message: "Please allow photo access so Glam Pro can save generated content to your Photos.",
+                    message: "Please allow photo access so CLAM can save generated content to your Photos.",
                     opensSettings: status == .denied || status == .restricted
                 )
                 return

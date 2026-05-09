@@ -183,7 +183,7 @@ struct CreditView: View {
     private func bottomPanel() -> some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Glam Pro Credit Packs")
+                Text("CLAM Credit Packs")
                     .font(.calm(30, weight: .heavy))
                     .foregroundColor(.white)
 

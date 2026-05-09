@@ -340,7 +340,7 @@ struct HomeView: View {
         HStack(spacing: 10) {
             Button(action: handleReviewLoginTitleTap) {
                 HStack(spacing: 8) {
-                    Text("Glam Pro")
+                    Text("CLAM")
                         .font(.calm(26, weight: .heavy))
                         .foregroundColor(.white)
                         .lineLimit(1)

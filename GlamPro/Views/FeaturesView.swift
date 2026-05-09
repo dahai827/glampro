@@ -348,6 +348,7 @@ struct AIChatView: View {
     @State private var selectedAttachmentMedia: FeaturePickedMedia?
     @State private var isSubmitting = false
     @State private var alertItem: FeatureAlertItem?
+    @State private var showReviewGenerationDisclosure = false
     @State private var chatMessages: [FeatureChatMessage] = []
     @State private var previewingImage: UIImage?
     @State private var previewingURL: URL?
@@ -424,6 +425,7 @@ struct AIChatView: View {
                 dismissButton: .default(Text("OK"))
             )
         }
+        .reviewGenerationDisclosure(isPresented: $showReviewGenerationDisclosure)
         .sheet(isPresented: Binding(
             get: { previewingImage != nil || previewingURL != nil },
             set: { if !$0 { previewingImage = nil; previewingURL = nil } }
@@ -751,6 +753,11 @@ struct AIChatView: View {
             return
         }
 
+        if appBootstrap.shouldPresentReviewGenerationDisclosure() {
+            showReviewGenerationDisclosure = true
+            return
+        }
+
         isSubmitting = true
         defer { isSubmitting = false }
 
@@ -949,6 +956,7 @@ struct CustomStylesView: View {
     @State private var selectedMediaAsset: FeaturePickedMedia?
     @State private var submitStage: FeatureSubmitStage = .idle
     @State private var alertItem: FeatureAlertItem?
+    @State private var showReviewGenerationDisclosure = false
 
     let onClose: () -> Void
     let onRequireSubscription: () -> Void
@@ -1021,6 +1029,7 @@ struct CustomStylesView: View {
                 dismissButton: .default(Text("OK"))
             )
         }
+        .reviewGenerationDisclosure(isPresented: $showReviewGenerationDisclosure)
     }
 
     private var header: some View {
@@ -1213,6 +1222,11 @@ struct CustomStylesView: View {
             return
         }
 
+        if appBootstrap.shouldPresentReviewGenerationDisclosure() {
+            showReviewGenerationDisclosure = true
+            return
+        }
+
         submitStage = .uploading
         defer { submitStage = .idle }
 
@@ -1306,6 +1320,7 @@ struct MotionSwapView: View {
     @State private var selectedVideoPreview: UIImage?
     @State private var submitStage: FeatureSubmitStage = .idle
     @State private var alertItem: FeatureAlertItem?
+    @State private var showReviewGenerationDisclosure = false
 
     let onClose: () -> Void
     let onRequireSubscription: () -> Void
@@ -1409,6 +1424,7 @@ struct MotionSwapView: View {
                 }
             )
         }
+        .reviewGenerationDisclosure(isPresented: $showReviewGenerationDisclosure)
     }
 
     private var header: some View {
@@ -1639,6 +1655,11 @@ struct MotionSwapView: View {
         }
         guard sessionManager.creditsBalance >= requiredCoins else {
             onInsufficientCredits()
+            return
+        }
+
+        if appBootstrap.shouldPresentReviewGenerationDisclosure() {
+            showReviewGenerationDisclosure = true
             return
         }
 
@@ -1906,7 +1927,7 @@ private struct FeatureImagePreviewSheet: View {
             Button("Cancel", role: .cancel) {}
             Button("Settings") { openAppSettings() }
         } message: {
-            Text("Please allow photo access in Settings so Glam Pro can save images.")
+            Text("Please allow photo access in Settings so CLAM can save images.")
         }
     }
 

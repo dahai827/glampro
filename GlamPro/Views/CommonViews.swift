@@ -176,7 +176,7 @@ struct BrandPill: View {
     var body: some View {
         HStack(spacing: 7) {
             BrandOrb(size: 18)
-            Text("Glam Pro")
+            Text("CLAM")
                 .font(.calm(15, weight: .bold))
         }
         .foregroundColor(.white)

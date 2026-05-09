@@ -260,7 +260,7 @@ struct GenerationProgressView: View {
         case .failed:
             return "The task stopped before completion. You can go back and try again."
         default:
-            return "Stay on this screen while Glam Pro AI finishes your creation."
+            return "Stay on this screen while CLAM AI finishes your creation."
         }
     }
 

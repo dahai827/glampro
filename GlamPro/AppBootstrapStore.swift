@@ -3,6 +3,7 @@ import Foundation
 @MainActor
 final class AppBootstrapStore: ObservableObject {
     private static let reviewFontModeDefaultsKey = "glampro.review.font.mode"
+    private static let reviewGenerationDisclosureSeenKey = "glampro.review.generation.disclosure.seen"
 
     @Published private(set) var videoSections: [RemoteFeatureSection] = []
     @Published private(set) var imageSections: [RemoteFeatureSection] = []
@@ -88,6 +89,13 @@ final class AppBootstrapStore: ObservableObject {
 
     func selectPreviewItem(_ item: RemoteFeatureItem) {
         selectedPreviewItem = item
+    }
+
+    func shouldPresentReviewGenerationDisclosure() -> Bool {
+        guard isReviewVersion else { return false }
+        guard !UserDefaults.standard.bool(forKey: Self.reviewGenerationDisclosureSeenKey) else { return false }
+        UserDefaults.standard.set(true, forKey: Self.reviewGenerationDisclosureSeenKey)
+        return true
     }
 
     private func kickOffReviewVersionResolutionIfNeeded(force: Bool = false) {

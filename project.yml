@@ -31,13 +31,13 @@ targets:
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: GlamPro
+        INFOPLIST_KEY_CFBundleDisplayName: CLAM
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_NSCameraUsageDescription: Use the camera to capture your source photo for AI generation.
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: Use your photo library to choose source images for AI generation.
-        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Allow Glam Pro to save generated images and videos to your Photos.
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Allow CLAM to save generated images and videos to your Photos.
         INFOPLIST_KEY_NSUserTrackingUsageDescription: Your data will be used to deliver personalized ads to you.
         INFOPLIST_KEY_FacebookAppID: "1261567822843388"
         INFOPLIST_KEY_FacebookClientToken: "7f8164762043d79e0107d264ad591677"

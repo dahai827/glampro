@@ -43,7 +43,7 @@ struct SubscriptionOfferOneView: View {
                 case .unlockPrompt:
                     guidePromptView(
                         title: "Your preview is almost ready",
-                        subtitle: "Unlock full results, unlimited styles, and priority generation with Glam Pro.",
+                        subtitle: "Unlock full results, unlimited styles, and priority generation with CLAM.",
                         buttonTitle: "Unlock Result",
                         caption: "Tap anywhere to continue",
                         showsPreviewCard: false,
@@ -335,7 +335,7 @@ struct SubscriptionOfferOneView: View {
 
             Spacer(minLength: 0)
 
-            SubscriptionPill(title: phase == .countdown ? formatCountdown(remainingSeconds) : "Glam Pro", tint: phase == .countdown ? GlamProTheme.orange : GlamProTheme.purple)
+            SubscriptionPill(title: phase == .countdown ? formatCountdown(remainingSeconds) : "CLAM", tint: phase == .countdown ? GlamProTheme.orange : GlamProTheme.purple)
         }
         .frame(maxWidth: .infinity)
     }
@@ -615,7 +615,7 @@ struct SubscriptionOfferTwoView: View {
     private func paywallPanel(bottomInset: CGFloat, metrics: PaywallMetrics) -> some View {
         VStack(alignment: .leading, spacing: metrics.v(16)) {
             VStack(alignment: .leading, spacing: metrics.v(10)) {
-                Text("Unlock GlamPro AI Tools")
+                Text("Unlock CLAM AI Tools")
                     .font(.calm(metrics.v(32), weight: .heavy))
                     .foregroundColor(.white)
             }
